@@ -4,18 +4,21 @@ import json
 import signal
 
 from PyQt5 import QtWidgets, QtCore, uic
-from PyQt5.QtWidgets import QMenuBar, QAction
+from PyQt5.QtWidgets import QMenuBar, QAction, QListWidgetItem
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
 
 from RequestTable import RequestTable
 from BodySelector import BodySelection, BodySelector 
 from RequestHandler import RequestTypes, RequestHandler
+from ScripterTool import ScripterTool
 
 DEFAULT_STATE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".state")
 host = None
 
 class Getman(QtWidgets.QWidget):
   response_signal = pyqtSignal(dict)
+  record_request_signal = pyqtSignal(dict)
+
   def __init__(self, parent = None):
     super(Getman, self).__init__(parent)
     uic.loadUi('ui/Getman.ui', self)
@@ -24,10 +27,11 @@ class Getman(QtWidgets.QWidget):
 
     self.headers_table = RequestTable()
     self.body_selector = BodySelector()
+    self.scripter_tool = ScripterTool()
 
     self.tabwidget_req_settings.addTab(self.headers_table, "Headers")
     self.tabwidget_req_settings.addTab(self.body_selector, "Body")
-
+    self.vl_scripter.addWidget(self.scripter_tool)
     self.ConnectActions()
 
   def closeEvent(self, event):
@@ -64,6 +68,7 @@ class Getman(QtWidgets.QWidget):
 
   def ConnectActions(self):
     self.pb_send.clicked.connect(self.SendRequest)
+    self.record_request_signal.connect(self.ProcessScriptRequestRecording)
     self.response_signal.connect(self.ProcessResponse)
     self.InitRequestTypes()
     self.LoadState()
@@ -81,12 +86,17 @@ class Getman(QtWidgets.QWidget):
       if body_selection == BodySelection.JSON:
         body = body_data
 
-      response_json = RequestHandler.Request(url, self.cbox_request_type.currentData(), body=body, form=form)
+      request, response_json = RequestHandler.Request(url, self.cbox_request_type.currentData(), body=body, form=form)
+      self.record_request_signal.emit(RequestHandler.GetRequestJson(request))
       self.response_signal.emit(response_json)
 
   @pyqtSlot(dict)
   def ProcessResponse(self, response: dict):
-    self.te_response.setText(json.dumps(response, indent=4)) 
+    self.list_widget_responses.addItem(QListWidgetItem(str(response))) 
+
+  @pyqtSlot(dict)
+  def ProcessScriptRequestRecording(self, request: dict):
+    self.scripter_tool.AddRequest(request)
 
 class GetmanWindow(QtWidgets.QMainWindow):
   def __init__(self, application):
@@ -94,6 +104,7 @@ class GetmanWindow(QtWidgets.QMainWindow):
     self.InitMenu()
     self.app = application()
     self.setCentralWidget(self.app)
+    self.showMaximized()
 
   def closeEvent(self, event):
     self.app.closeEvent(event)

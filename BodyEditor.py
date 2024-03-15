@@ -3,7 +3,6 @@ import os
 import json
 
 from PyQt5 import QtWidgets, QtCore, uic
-from PyQt5.QtWidgets import QTableWidgetItem
 
 class BodyEditor(QtWidgets.QWidget):
   def __init__(self, parent = None):

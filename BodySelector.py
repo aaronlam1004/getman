@@ -15,4 +15,6 @@ class BodySelector(QtWidgets.QWidget):
     pass
 
   def ConnectActions(self):
+    # self.rb_form_data.clicked.connect()
+    # self.rb_json.clicked.connect()
     pass

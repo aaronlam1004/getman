@@ -44,10 +44,11 @@ class RequestTable(QtWidgets.QWidget):
 
   def AddNewRow(self):
     self.tablewidget_req_options.insertRow(self.GetRowCount())
-    checkbox_widget = QTableWidgetItem()
-    checkbox_widget.setFlags(QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
-    checkbox_widget.setCheckState(QtCore.Qt.Unchecked)
-    self.tablewidget_req_options.setItem(self.GetRowCount() - 1, 0, checkbox_widget)
+    table_widget_item = QTableWidgetItem()
+    table_widget_item.setFlags(QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
+    table_widget_item.setCheckState(QtCore.Qt.Unchecked)
+    self.tablewidget_req_options.setItem(self.GetRowCount() - 1, 0, table_widget_item)
+    return table_widget_item
 
   def CheckChange(self, item):
     for row in range(self.GetRowCount()):
@@ -71,3 +72,11 @@ class RequestTable(QtWidgets.QWidget):
       if key_item is not None and value_item is not None:
         request_fields[key_item.text()] = value_item.text()
     return request_fields
+
+  def SetRequestFields(self, request_fields):
+    for i, (k, v) in enumerate(request_fields.items()):
+      table_widget_item = self.AddNewRow()
+      table_widget_item.setCheckState(QtCore.Qt.Checked)
+      self.tablewidget_req_options.setItem(i, 0, table_widget_item)
+      self.tablewidget_req_options.setItem(i, 1, QTableWidgetItem(k))
+      self.tablewidget_req_options.setItem(i, 2, QTableWidgetItem(v))

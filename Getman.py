@@ -8,8 +8,7 @@ from PyQt5.QtWidgets import QTableWidgetItem
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
 
 from RequestTable import RequestTable
-from BodySelector import BodySelector
-from BodyEditor import BodyEditor
+from BodySelector import BodySelection, BodySelector 
 from RequestHandler import RequestTypes, RequestHandler
 
 STATE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".state")
@@ -25,7 +24,6 @@ class Getman(QtWidgets.QWidget):
 
     self.headers_table = RequestTable()
     self.body_selector = BodySelector()
-    self.body_editor = BodyEditor()
 
     self.tabwidget_req_settings.addTab(self.headers_table, "Headers")
     self.tabwidget_req_settings.addTab(self.body_selector, "Body")
@@ -39,7 +37,11 @@ class Getman(QtWidgets.QWidget):
     state_json = {}
     state_json["url"] = self.le_url.text()
     state_json["request_type"] = self.cbox_request_type.currentText()
-    state_json["body"] = self.body_editor.GetBodyText()
+    body_selection, body_data = self.body_selector.GetBodyData(json_string = True)
+    state_json["body"] = {
+      "body_selection": body_selection,
+      "body_data": body_data
+    }
     with open(STATE_FILE, 'w') as state_file:
       json.dump(state_json, state_file, indent=4)
 
@@ -50,7 +52,7 @@ class Getman(QtWidgets.QWidget):
           state_json = json.loads(state_file.read())
           self.le_url.setText(state_json["url"])
           self.cbox_request_type.setCurrentText(state_json["request_type"])
-          self.body_editor.LoadState(state_json)
+          self.body_selector.LoadState(state_json)
         except Exception as exception:
           print(f"Exception occured while to load the state: {exception}")
           pass 
@@ -68,9 +70,17 @@ class Getman(QtWidgets.QWidget):
   def SendRequest(self):
     url = self.le_url.text()
     if url != "":
-      body = self.body_editor.GetBody()
       headers = self.headers_table.GetRequestFields()
-      response_json = RequestHandler.Request(url, self.cbox_request_type.currentData(), body=body)
+
+      form = {}
+      body = {}
+      body_selection, body_data = self.body_selector.GetBodyData()
+      if body_selection == BodySelection.FORM:
+        form = body_data 
+      if body_selection == BodySelection.JSON:
+        body = body_data
+
+      response_json = RequestHandler.Request(url, self.cbox_request_type.currentData(), body=body, form=form)
       self.response_signal.emit(response_json)
 
   @pyqtSlot(dict)

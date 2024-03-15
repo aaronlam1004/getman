@@ -11,12 +11,11 @@ class BodyEditor(QtWidgets.QWidget):
     uic.loadUi('ui/BodyEditor.ui', self)
     self.ConnectActions()
 
-  def LoadState(self, state_json):
-    if "body" in state_json:
-      self.te_body.setText(state_json["body"])
-
   def ConnectActions(self):
     self.te_body.setTabStopWidth(self.te_body.fontMetrics().width(' ') * 4)
+
+  def SetBodyText(self, body_data):
+    self.te_body.setText(str(body_data))
 
   def GetBodyText(self):
     return self.te_body.toPlainText()  

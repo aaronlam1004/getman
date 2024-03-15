@@ -13,10 +13,10 @@ class RequestTypes(Enum):
 
 class RequestHandler:
   @staticmethod
-  def Request(url, request_type, body={}):
+  def Request(url, request_type, body={}, form={}):
     response = {}
     if request_type == RequestTypes.GET:
-      response = requests.get(url, json=body)
+      response = requests.get(url, json=body, data=form)
     elif request_type == RequestTypes.POST:
-      response = requests.post(url, json=body)
+      response = requests.post(url, json=body, data=form)
     return response.json()

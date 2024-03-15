@@ -69,8 +69,8 @@ class RequestTable(QtWidgets.QWidget):
     for row in range(self.GetRowCount()):
       key_item = self.tablewidget_req_options.item(row, TABLE_HEADER_LABELS["Key"])
       value_item = self.tablewidget_req_options.item(row, TABLE_HEADER_LABELS["Value"])
-      if key_item is not None and value_item is not None:
-        request_fields[key_item.text()] = value_item.text()
+      if key_item is not None:
+        request_fields[key_item.text()] = value_item.text() if value_item is not None else ""
     return request_fields
 
   def SetRequestFields(self, request_fields):

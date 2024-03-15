@@ -15,33 +15,54 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <item>
-      <widget class="QComboBox" name="cbox_request_type"/>
-     </item>
-     <item>
-      <widget class="QLineEdit" name="le_url"/>
-     </item>
-     <item>
-      <widget class="QPushButton" name="pb_send">
-       <property name="text">
-        <string>Send</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item>
-    <widget class="QSplitter" name="splitter">
+    <widget class="QSplitter" name="splitter_2">
      <property name="orientation">
-      <enum>Qt::Vertical</enum>
+      <enum>Qt::Horizontal</enum>
      </property>
-     <widget class="QTabWidget" name="tabwidget_req_settings">
-      <property name="currentIndex">
-       <number>-1</number>
-      </property>
+     <widget class="QTreeWidget" name="treeWidget">
+      <column>
+       <property name="text">
+        <string notr="true">1</string>
+       </property>
+      </column>
      </widget>
-     <widget class="QTextEdit" name="te_response"/>
+     <widget class="QGroupBox" name="groupBox">
+      <property name="title">
+       <string/>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout">
+         <item>
+          <widget class="QComboBox" name="cbox_request_type"/>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="le_url"/>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pb_send">
+           <property name="text">
+            <string>Send</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QSplitter" name="splitter">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <widget class="QTabWidget" name="tabwidget_req_settings">
+          <property name="currentIndex">
+           <number>-1</number>
+          </property>
+         </widget>
+         <widget class="QTextEdit" name="te_response"/>
+        </widget>
+       </item>
+      </layout>
+     </widget>
     </widget>
    </item>
   </layout>

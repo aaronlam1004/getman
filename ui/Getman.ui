@@ -36,25 +36,10 @@
      <property name="orientation">
       <enum>Qt::Vertical</enum>
      </property>
-     <widget class="QTabWidget" name="tabWidget">
+     <widget class="QTabWidget" name="tabwidget_req_settings">
       <property name="currentIndex">
-       <number>0</number>
+       <number>-1</number>
       </property>
-      <widget class="QWidget" name="tab_headers">
-       <attribute name="title">
-        <string>Headers</string>
-       </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_2">
-        <item>
-         <widget class="QTableView" name="tableview_headers"/>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="tab_body">
-       <attribute name="title">
-        <string>Body</string>
-       </attribute>
-      </widget>
      </widget>
      <widget class="QTextEdit" name="te_response"/>
     </widget>

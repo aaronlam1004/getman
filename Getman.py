@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import QTableWidgetItem
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
 
 from RequestTable import RequestTable
+from BodySelector import BodySelector
 from BodyEditor import BodyEditor
 from RequestHandler import RequestTypes, RequestHandler
 
@@ -23,10 +24,11 @@ class Getman(QtWidgets.QWidget):
     self.setWindowTitle("Getman")
 
     self.headers_table = RequestTable()
+    self.body_selector = BodySelector()
     self.body_editor = BodyEditor()
 
     self.tabwidget_req_settings.addTab(self.headers_table, "Headers")
-    self.tabwidget_req_settings.addTab(self.body_editor, "Body")
+    self.tabwidget_req_settings.addTab(self.body_selector, "Body")
 
     self.ConnectActions()
 

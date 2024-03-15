@@ -22,27 +22,30 @@
         <enum>QLayout::SetDefaultConstraint</enum>
        </property>
        <item>
-        <widget class="QRadioButton" name="radioButton">
+        <widget class="QRadioButton" name="rb_none">
          <property name="text">
           <string>None</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QRadioButton" name="radioButton_2">
+        <widget class="QRadioButton" name="rb_form_data">
          <property name="text">
           <string>Form Data</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QRadioButton" name="radioButton_3">
+        <widget class="QRadioButton" name="rb_json">
          <property name="text">
           <string>JSON</string>
          </property>
         </widget>
        </item>
       </layout>
+     </item>
+     <item>
+      <widget class="QWidget" name="widget" native="true"/>
      </item>
     </layout>
    </item>

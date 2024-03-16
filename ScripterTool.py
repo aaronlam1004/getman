@@ -5,13 +5,13 @@ import json
 from PyQt5 import QtWidgets, QtCore, uic
 from PyQt5.QtWidgets import QTableWidgetItem
 
-from ScriptHighlighter import JSONHighlighter
+from ScriptHighlighter import ScriptHighlighter
 
 class ScripterTool(QtWidgets.QWidget):
   def __init__(self, parent = None):
     super(ScripterTool, self).__init__(parent)
     uic.loadUi('ui/ScripterTool.ui', self)
-    self.highlighter = JSONHighlighter(self.te_script_body.document())
+    self.highlighter = ScriptHighlighter(self.te_script_body.document())
 
   def SetScript(self):
     pass
@@ -20,4 +20,4 @@ class ScripterTool(QtWidgets.QWidget):
     curr_text = self.te_script_body.toPlainText()
     if curr_text != "":
       curr_text += '\n'
-    self.te_script_body.setText(f"{curr_text}{str(request_json)}")
+    self.te_script_body.setText(f"{curr_text}REQ: {str(request_json)}")

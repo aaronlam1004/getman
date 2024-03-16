@@ -5,8 +5,9 @@ from PyQt5 import QtWidgets, QtCore, uic, QtGui
 from PyQt5.QtGui import QFont, QColor
 
 SCRIPT_KEYWORDS = {
-  "REQ:": "#FF0000",
-  "RES": "#FF0000"
+  "REQ": "#FF0000",
+  "RES": "#FF0000",
+  "ASSERT": "#0000FF"
 }
 
 @dataclass
@@ -30,12 +31,7 @@ class ScriptHighlighter(IHighlighter):
     formatting = QtGui.QTextCharFormat()
     formatting.setFontWeight(QFont.Bold)
     formatting.setForeground(QColor("#000055"))
-    self.AddRule(QtCore.QRegExp("(\'\w+\':)"), formatting)
-
-    formatting = QtGui.QTextCharFormat()
-    formatting.setFontWeight(QFont.Bold)
-    formatting.setForeground(QColor("#FF9012"))
-    self.AddRule(QtCore.QRegExp("(\{\{\w+\}\})"), formatting)
+    self.AddRule(QtCore.QRegExp("(\"\w+\":)"), formatting)
 
     for keyword, color in SCRIPT_KEYWORDS.items():
       formatting = QtGui.QTextCharFormat()

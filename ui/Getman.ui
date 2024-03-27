@@ -25,6 +25,37 @@
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_4">
        <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_5">
+         <item>
+          <widget class="QPushButton" name="pb_save">
+           <property name="text">
+            <string>Save</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pb_load">
+           <property name="text">
+            <string>Load</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
+       <item>
         <widget class="QSplitter" name="splitter">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -52,21 +83,45 @@
             </layout>
            </item>
            <item>
-            <widget class="QTabWidget" name="tabwidget_req_settings">
-             <property name="currentIndex">
-              <number>-1</number>
+            <widget class="QSplitter" name="splitter_4">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
              </property>
+             <widget class="QTabWidget" name="tabwidget_req_settings">
+              <property name="currentIndex">
+               <number>-1</number>
+              </property>
+             </widget>
+             <widget class="QGroupBox" name="groupBox_2">
+              <property name="title">
+               <string/>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout">
+               <item>
+                <widget class="QSplitter" name="splitter_3">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <widget class="QListWidget" name="list_widget_responses"/>
+                 <widget class="QTextEdit" name="te_response_json"/>
+                </widget>
+               </item>
+              </layout>
+             </widget>
             </widget>
            </item>
           </layout>
          </widget>
-         <widget class="QListWidget" name="list_widget_responses"/>
         </widget>
        </item>
       </layout>
      </widget>
      <widget class="QWidget" name="verticalLayoutWidget">
-      <layout class="QVBoxLayout" name="vl_scripter"/>
+      <layout class="QVBoxLayout" name="verticalLayout_5">
+       <item>
+        <widget class="QListWidget" name="list_widget_history"/>
+       </item>
+      </layout>
      </widget>
     </widget>
    </item>

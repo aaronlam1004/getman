@@ -21,10 +21,10 @@ class RequestHandler:
     return request_json
   
   @staticmethod
-  def Request(url, request_type, body={}, form={}):
+  def Request(url, request_type, headers={}, body={}, form={}):
     response = {}
     session = requests.Session()
-    request = requests.Request(request_type.value, url, json=body, data=form)
+    request = requests.Request(request_type.value, url, headers=headers, json=body, data=form)
     res = session.send(request.prepare())
     response = res.json()
     return request, response

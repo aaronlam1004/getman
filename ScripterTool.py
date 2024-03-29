@@ -14,7 +14,6 @@ class ScripterTool(QtWidgets.QWidget):
     super(ScripterTool, self).__init__(parent)
     uic.loadUi('ui/ScripterTool.ui', self)
     self.highlighter = ScriptHighlighter(self.te_script_body.document())
-
     self.ConnectActions()
 
   def ConnectActions(self):

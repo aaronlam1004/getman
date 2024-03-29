@@ -1,4 +1,5 @@
 from enum import Enum
+import json
 
 import requests
 
@@ -26,5 +27,10 @@ class RequestHandler:
     session = requests.Session()
     request = requests.Request(request_type.value, url, headers=headers, json=body, data=form)
     res = session.send(request.prepare())
-    response = res.json()
+    try:
+      response = res.json()
+    except Exception as exception:
+      response = { "status_code": res.status_code, "reason": res.reason }
+      response = json.dumps(response)
+      response = json.loads(response)
     return request, response

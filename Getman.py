@@ -44,7 +44,7 @@ class Getman(QtWidgets.QWidget):
     self.headers_table = RequestTable()
     self.params_table = RequestTable()
     self.body_selector = BodySelector()
-    # self.scripter_tool = ScripterTool()
+    self.scripter_tool = None
 
     self.tabwidget_req_settings.addTab(self.headers_table, "Headers")
     self.tabwidget_req_settings.addTab(self.params_table, "Params")
@@ -58,6 +58,10 @@ class Getman(QtWidgets.QWidget):
     self.cbox_request_type.setStyleSheet("selection-background-color: rgb(0, 0, 0)")
 
     self.ConnectActions()
+
+  def OpenScriptTool(self):
+    self.scripter_tool = ScripterTool()
+    self.scripter_tool.show()
 
   # TODO: close event
 
@@ -169,9 +173,17 @@ class GetmanApp(QtWidgets.QMainWindow):
   def InitializeFileMenuOptions(self):
     file_menu = self.menu_bar.addMenu("File")
 
-    save_action = QAction("Save", self)
+    save_action = QAction("Save Workspace", self)
     save_action.triggered.connect(self.getman.SaveState)
     file_menu.addAction(save_action)
+
+    load_action = QAction("Load Workspace", self)
+    # load_Action.triggered.connect()
+    file_menu.addAction(load_action)
+
+    open_scripts_action = QAction("Open Script Tool", self)
+    open_scripts_action.triggered.connect(self.getman.OpenScriptTool)
+    file_menu.addAction(open_scripts_action)
 
     exit_action = QAction("Exit", self)
     exit_action.triggered.connect(self.close)

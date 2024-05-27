@@ -23,15 +23,17 @@ class ScripterTool(QtWidgets.QWidget):
     pass
 
   def RunScript(self):
-    commands = self.te_script_body.toPlainText().split('\n')
-    compile_status = ScriptCompiler.Compile(commands)
-    if compile_status["status"] != CompileStatus.OK.value:
-      print(compile_status["error"])
-    else:
-      runner = ScriptRunner()
-      runner.Run(compile_status["commands"]) 
+    pass
+    # commands = self.te_script_body.toPlainText().split('\n')
+    # compile_status = ScriptCompiler.Compile(commands)
+    # if compile_status["status"] != CompileStatus.OK.value:
+    #   print(compile_status["error"])
+    # else:
+    #   runner = ScriptRunner()
+    #   runner.Run(compile_status["commands"])
 
   def AddRequest(self, request_json):
+    pass
     curr_text = self.te_script_body.toPlainText()
     if curr_text != "":
       curr_text += '\n'

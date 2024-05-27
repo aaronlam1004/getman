@@ -17,7 +17,7 @@ class BodyEditor(QtWidgets.QWidget):
     self.te_body.setText(str(body_data))
 
   def GetBodyText(self):
-    return self.te_body.toPlainText()  
+    return self.te_body.toPlainText()
 
   def GetBody(self):
     body = {}

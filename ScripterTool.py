@@ -13,7 +13,7 @@ class ScripterTool(QtWidgets.QWidget):
   def __init__(self, parent = None):
     super(ScripterTool, self).__init__(parent)
     uic.loadUi('ui/ScripterTool.ui', self)
-    self.highlighter = ScriptHighlighter(self.te_script_body.document())
+    # self.highlighter = ScriptHighlighter(self.te_script_body.document())
     self.ConnectActions()
 
   def ConnectActions(self):

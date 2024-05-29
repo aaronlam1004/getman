@@ -32,7 +32,7 @@
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
        <item>
-        <widget class="QListView" name="list_view_script"/>
+        <widget class="QListWidget" name="list_script_steps"/>
        </item>
       </layout>
      </widget>
@@ -42,7 +42,7 @@
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_3">
        <item>
-        <widget class="QTextEdit" name="textEdit">
+        <widget class="QTextEdit" name="te_script_step_editor">
          <property name="enabled">
           <bool>false</bool>
          </property>

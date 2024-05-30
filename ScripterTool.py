@@ -4,7 +4,7 @@ import json
 
 from PyQt5 import QtWidgets, QtCore, uic
 from PyQt5.QtWidgets import QTableWidgetItem, QStyledItemDelegate
-from PyQt5.QtCore import pyqtSignal, pyqtSlot
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt
 
 from ScriptHighlighter import ScriptHighlighter
 from ScriptCompiler import CompileStatus, ScriptCompiler
@@ -13,7 +13,7 @@ from ScriptRunner import ScriptRunner
 class ScriptListDelegate(QStyledItemDelegate):
     def initStyleOption(self, option, index):
         super().initStyleOption(option, index)
-        option.text = f"{index.row() + 1} {option.text}"
+        option.text = f"{index.row() + 1}: {option.text}"
 
 class ScripterTool(QtWidgets.QWidget):
     request_script_signal = pyqtSignal(str)
@@ -26,10 +26,16 @@ class ScripterTool(QtWidgets.QWidget):
         self.list_script_steps.setItemDelegate(self.list_script_steps_delegate)
         self.ConnectActions()
 
+    def keyPressEvent(self, event):
+        if self.list_script_steps.hasFocus():
+            if event.key() == Qt.Key_Return:
+                if self.list_script_steps.count() == 0 or self.list_script_steps.item(self.list_script_steps.count() - 1).text() != "":
+                    self.AddEmptyScriptStep()
+
     def ConnectActions(self):
         self.list_script_steps.itemSelectionChanged.connect(self.EnableEditScriptStep)
         self.te_script_step_editor.textChanged.connect(self.UpdateScriptStep)
-        # self.pb_run_script.clicked.connect(self.RunScript)
+        self.pb_run_script.clicked.connect(self.RunScript)
 
     def EnableEditScriptStep(self):
         self.te_script_step_editor.setEnabled(True)
@@ -39,15 +45,21 @@ class ScripterTool(QtWidgets.QWidget):
         script_step_text = self.te_script_step_editor.toPlainText().replace('\n', ' ')
         self.list_script_steps.currentItem().setText(script_step_text)
 
+    def AddEmptyScriptStep(self):
+        self.list_script_steps.addItem("")
+
     @pyqtSlot(str)
     def AddRequestToScript(self, request_json):
-        self.list_script_steps.addItem(request_json)
+        self.list_script_steps.addItem(f"SEND: {request_json}")
 
     def SetScriptBody(self):
         pass
 
     def RunScript(self):
-        pass
+        script_steps = []
+        for i in range(self.list_script_steps.count()):
+           script_steps.append(self.list_script_steps.item(i).text())
+        ScriptCompiler.Compile(script_steps)
         # commands = self.te_script_body.toPlainText().split('\n')
         # compile_status = ScriptCompiler.Compile(commands)
         # if compile_status["status"] != CompileStatus.OK.value:

@@ -14,7 +14,7 @@ class RequestTypes(Enum):
 
 class RequestHandler:
     @staticmethod
-    def GetRequestJson(request):
+    def GetJsonFromRequest(request):
         request_json = {}
         for k, v in vars(request).items():
             if k != "hooks":

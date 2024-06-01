@@ -15,7 +15,7 @@ from RequestHandler import RequestTypes, RequestHandler
 from ScripterTool import ScripterTool
 from JsonHighlighter import JsonHighlighter
 
-DEFAULT_STATE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".state")
+DEFAULT_STATE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".workspace")
 host = None
 
 REQUEST_TYPE_UI = {
@@ -136,7 +136,7 @@ class Getman(QtWidgets.QWidget):
             if body_selection == BodySelection.JSON:
                 body = body_data
             request, response_json = RequestHandler.Request(url, self.cbox_request_type.currentData(), headers=headers, body=body, form=form)
-            self.AddRequestHistory(RequestHandler.GetRequestJson(request))
+            self.AddRequestHistory(RequestHandler.GetJsonFromRequest(request))
             self.response_signal.emit(response_json)
 
     def DisplayResponseJson(self):

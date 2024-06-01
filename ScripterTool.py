@@ -31,6 +31,8 @@ class ScripterTool(QtWidgets.QWidget):
             if event.key() == Qt.Key_Return:
                 if self.list_script_steps.count() == 0 or self.list_script_steps.item(self.list_script_steps.count() - 1).text() != "":
                     self.AddEmptyScriptStep()
+            elif event.key() == Qt.Key_Backspace or event.key() == Qt.Key_Delete:
+                print("Delete")
 
     def ConnectActions(self):
         self.list_script_steps.itemSelectionChanged.connect(self.EnableEditScriptStep)
@@ -50,7 +52,12 @@ class ScripterTool(QtWidgets.QWidget):
 
     @pyqtSlot(str)
     def AddRequestToScript(self, request_json):
-        self.list_script_steps.addItem(f"SEND: {request_json}")
+        script_text = f"SEND {request_json}"
+        last_step = self.list_script_steps.item(self.list_script_steps.count() - 1)
+        if last_step is None or last_step.text() != "":
+            self.list_script_steps.addItem(script_text)
+        else:
+            last_step.setText(script_text)
 
     def SetScriptBody(self):
         pass
@@ -59,14 +66,8 @@ class ScripterTool(QtWidgets.QWidget):
         script_steps = []
         for i in range(self.list_script_steps.count()):
            script_steps.append(self.list_script_steps.item(i).text())
-        ScriptCompiler.Compile(script_steps)
-        # commands = self.te_script_body.toPlainText().split('\n')
-        # compile_status = ScriptCompiler.Compile(commands)
-        # if compile_status["status"] != CompileStatus.OK.value:
-        #   print(compile_status["error"])
-        # else:
-        #   runner = ScriptRunner()
-        #   runner.Run(compile_status["commands"])
+        compile_status = ScriptCompiler.Compile(script_steps)
+        print(compile_status)
 
     def AddRequest(self, request_json):
         pass

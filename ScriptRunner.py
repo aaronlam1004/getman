@@ -2,16 +2,19 @@ from RequestHandler import RequestTypes, RequestHandler
 
 class ScriptRunner:
     def __init__(self):
-        self.vars = {}
+        self.variables = {}
 
-    def Run(self, commands):
+    def Run(self, compiled_script):
+        print(compiled_script)
+        variables = compiled_script.get("vars", [])
+        commands = compiled_script.get("commands", [])
+        loops = compiled_script.get("loops", [])
         try:
-            for var, command in commands:
-                if var != "":
-                    self.vars[var] = eval(command)
-                    print(self.vars)
+            for i in range(len(commands)):
+                if variables[i] != "":
+                    self.variables[variables[i]] = eval(commands[i])
                 else:
-                    result = eval(command)
-                    print(result)
+                    eval(commands[i])
+            print(self.variables)
         except Exception as exception:
             print(exception)

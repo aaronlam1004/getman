@@ -12,7 +12,7 @@ from PyQt5.QtGui import QBrush, QColor, QFont
 from RequestTable import RequestTable
 from BodySelector import BodySelection, BodySelector
 from RequestHandler import RequestTypes, RequestHandler
-from ScripterTool import ScripterTool
+from ScriptIDE import ScriptIDE
 from JsonHighlighter import JsonHighlighter
 
 DEFAULT_STATE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".workspace")
@@ -44,7 +44,7 @@ class Getman(QtWidgets.QWidget):
         self.headers_table = RequestTable()
         self.params_table = RequestTable()
         self.body_selector = BodySelector()
-        self.scripter_tool = None
+        self.script_ide = None
 
         self.tabwidget_req_settings.addTab(self.headers_table, "Headers")
         self.tabwidget_req_settings.addTab(self.params_table, "Params")
@@ -60,9 +60,9 @@ class Getman(QtWidgets.QWidget):
         self.ConnectActions()
 
     def OpenScriptTool(self):
-        self.scripter_tool = ScripterTool()
-        self.scripter_tool.request_script_signal.connect(self.scripter_tool.AddRequestToScript)
-        self.scripter_tool.show()
+        self.script_ide = ScriptIDE()
+        self.script_ide.request_script_signal.connect(self.script_ide.AddRequestToScript)
+        self.script_ide.show()
 
     # TODO: close event
 
@@ -156,8 +156,8 @@ class Getman(QtWidgets.QWidget):
         state_json = self.GetState()
         self.request_history.append(state_json)
         self.list_widget_history.addItem(str(state_json))
-        if self.scripter_tool != None:
-            self.scripter_tool.request_script_signal.emit(request)
+        if self.script_ide != None:
+            self.script_ide.request_script_signal.emit(request)
 
 class GetmanApp(QtWidgets.QMainWindow):
     def __init__(self):
@@ -184,7 +184,7 @@ class GetmanApp(QtWidgets.QMainWindow):
         # load_Action.triggered.connect()
         file_menu.addAction(load_action)
 
-        open_scripts_action = QAction("Open Script Tool", self)
+        open_scripts_action = QAction("Open Script IDE", self)
         open_scripts_action.triggered.connect(self.getman.OpenScriptTool)
         file_menu.addAction(open_scripts_action)
 

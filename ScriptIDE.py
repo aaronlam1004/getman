@@ -15,12 +15,12 @@ class ScriptListDelegate(QStyledItemDelegate):
         super().initStyleOption(option, index)
         option.text = f"{index.row() + 1}: {option.text}"
 
-class ScripterTool(QtWidgets.QWidget):
+class ScriptIDE(QtWidgets.QWidget):
     request_script_signal = pyqtSignal(str)
 
     def __init__(self, parent = None):
-        super(ScripterTool, self).__init__(parent)
-        uic.loadUi('ui/ScripterTool.ui', self)
+        super(ScriptIDE, self).__init__(parent)
+        uic.loadUi('ui/ScriptIDE.ui', self)
         self.highlighter = ScriptHighlighter(self.te_script_step_editor.document())
         self.list_script_steps_delegate = ScriptListDelegate(self.list_script_steps)
         self.list_script_steps.setItemDelegate(self.list_script_steps_delegate)
@@ -49,30 +49,31 @@ class ScripterTool(QtWidgets.QWidget):
 
     def AddEmptyScriptStep(self):
         self.list_script_steps.addItem("")
+        self.list_script_steps.setCurrentRow(self.list_script_steps.count() - 1)
 
     @pyqtSlot(str)
     def AddRequestToScript(self, request_json):
-        script_text = f"SEND {request_json}"
+        script_text = f"SEND {request_json};"
         last_step = self.list_script_steps.item(self.list_script_steps.count() - 1)
         if last_step is None or last_step.text() != "":
             self.list_script_steps.addItem(script_text)
         else:
             last_step.setText(script_text)
-
-    def SetScriptBody(self):
-        pass
+        self.list_script_steps.setCurrentRow(self.list_script_steps.count() - 1)
+        self.te_script_step_editor.setText(self.list_script_steps.currentItem().text())
 
     def RunScript(self):
         script_steps = []
         for i in range(self.list_script_steps.count()):
            script_steps.append(self.list_script_steps.item(i).text())
         compile_status = ScriptCompiler.Compile(script_steps)
-        print(compile_status)
+        if compile_status["status"] == CompileStatus.OK:
+            script_runner = ScriptRunner()
+            script_runner.Run(compile_status["script"])
 
-    def AddRequest(self, request_json):
-        pass
-        curr_text = self.te_script_body.toPlainText()
-        if curr_text != "":
-            curr_text += '\n'
-        new_text = f"{curr_text}REQ {str(request_json)}".replace('\'', '\"').replace("None", "null")
-        self.te_script_body.setText(new_text)
+if __name__ == '__main__':
+    q_application = QtWidgets.QApplication(sys.argv)
+    q_application.setStyle("Fusion")
+    script_ide = ScriptIDE()
+    script_ide.show()
+    sys.exit(q_application.exec_())

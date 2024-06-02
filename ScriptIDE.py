@@ -24,15 +24,23 @@ class ScriptIDE(QtWidgets.QWidget):
         self.highlighter = ScriptHighlighter(self.te_script_step_editor.document())
         self.list_script_steps_delegate = ScriptListDelegate(self.list_script_steps)
         self.list_script_steps.setItemDelegate(self.list_script_steps_delegate)
+        self.te_script_step_editor.installEventFilter(self)
         self.ConnectActions()
 
+    def eventFilter(self, obj, event):
+        if obj is self.te_script_step_editor and event.type() == QtCore.QEvent.KeyPress:
+            if event.key() in [Qt.Key_Return, Qt.Key_Enter]:
+                self.AddScriptStep()
+                return True
+        return super(ScriptIDE, self).eventFilter(obj, event)
+
     def keyPressEvent(self, event):
-        if self.list_script_steps.hasFocus():
-            if event.key() == Qt.Key_Return:
-                if self.list_script_steps.count() == 0 or self.list_script_steps.item(self.list_script_steps.count() - 1).text() != "":
-                    self.AddEmptyScriptStep()
-            elif event.key() == Qt.Key_Backspace or event.key() == Qt.Key_Delete:
-                print("Delete")
+        if event.key() == Qt.Key_Return:
+            if self.list_script_steps.count() == 0 or self.list_script_steps.item(self.list_script_steps.count() - 1).text() != "":
+                self.AddScriptStep()
+        if self.list_script_steps.hasFocus():   
+            if event.key() == Qt.Key_Backspace or event.key() == Qt.Key_Delete:
+                self.DeleteScriptSteps()
 
     def ConnectActions(self):
         self.list_script_steps.itemSelectionChanged.connect(self.EnableEditScriptStep)
@@ -40,27 +48,39 @@ class ScriptIDE(QtWidgets.QWidget):
         self.pb_run_script.clicked.connect(self.RunScript)
 
     def EnableEditScriptStep(self):
-        self.te_script_step_editor.setEnabled(True)
-        self.te_script_step_editor.setText(self.list_script_steps.currentItem().text())
+        if self.list_script_steps.currentItem() is not None:
+            self.te_script_step_editor.setEnabled(True)
+            self.te_script_step_editor.setText(self.list_script_steps.currentItem().text())
+        else:
+            self.te_script_step_editor.setEnabled(False)
+            self.te_script_step_editor.setText("")
 
-    def UpdateScriptStep(self):
-        script_step_text = self.te_script_step_editor.toPlainText().replace('\n', ' ')
-        self.list_script_steps.currentItem().setText(script_step_text)
-
-    def AddEmptyScriptStep(self):
-        self.list_script_steps.addItem("")
+    def AddScriptStep(self, step_text=""):
+        self.list_script_steps.addItem(step_text)
         self.list_script_steps.setCurrentRow(self.list_script_steps.count() - 1)
+        item = self.list_script_steps.currentItem()
+        item.setCheckState(Qt.Unchecked)
+        self.te_script_step_editor.setFocus()
 
     @pyqtSlot(str)
     def AddRequestToScript(self, request_json):
-        script_text = f"SEND {request_json};"
+        step_text = f"SEND {request_json};"
         last_step = self.list_script_steps.item(self.list_script_steps.count() - 1)
         if last_step is None or last_step.text() != "":
-            self.list_script_steps.addItem(script_text)
+            self.AddScriptStep(step_text)
         else:
             last_step.setText(script_text)
-        self.list_script_steps.setCurrentRow(self.list_script_steps.count() - 1)
-        self.te_script_step_editor.setText(self.list_script_steps.currentItem().text())
+            self.list_script_steps.setCurrentRow(self.list_script_steps.count() - 1)
+            self.te_script_step_editor.setFocus()
+
+    def UpdateScriptStep(self):
+        if self.list_script_steps.currentItem() is not None:
+            script_step_text = self.te_script_step_editor.toPlainText().replace('\n', ' ')
+            self.list_script_steps.currentItem().setText(script_step_text)
+
+    def DeleteScriptSteps(self):
+        for item in self.list_script_steps.selectedItems():
+            self.list_script_steps.takeItem(self.list_script_steps.row(item))
 
     def RunScript(self):
         script_steps = []
@@ -69,7 +89,12 @@ class ScriptIDE(QtWidgets.QWidget):
         compile_status = ScriptCompiler.Compile(script_steps)
         if compile_status["status"] == CompileStatus.OK:
             script_runner = ScriptRunner()
-            script_runner.Run(compile_status["script"])
+            script_runner.Load(compile_status["script"])
+            script_output = script_runner.Run(debug_mode=True)
+            self.te_console_output.setText('\n'.join(script_output))
+        else:
+            error_output = f"Line {compile_status['line_number']} : {compile_status['error']}"
+            self.te_console_output.setText(error_output)
 
 if __name__ == '__main__':
     q_application = QtWidgets.QApplication(sys.argv)

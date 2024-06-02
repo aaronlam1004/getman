@@ -6,7 +6,6 @@ from RequestHandler import RequestTypes
 class CompileStatus(Enum):
     OK      = 0
     ERROR   = 1
-    WARNING = 2
 
 class ScriptSyntax(Enum):
     ASSIGN  = ":="

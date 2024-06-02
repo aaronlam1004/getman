@@ -57,7 +57,11 @@
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
-         <widget class="QListWidget" name="list_script_steps"/>
+         <widget class="QListWidget" name="list_script_steps">
+          <property name="selectionMode">
+           <enum>QAbstractItemView::MultiSelection</enum>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>
@@ -82,7 +86,11 @@
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_2">
        <item>
-        <widget class="QTextEdit" name="te_console_output"/>
+        <widget class="QTextEdit" name="te_console_output">
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>

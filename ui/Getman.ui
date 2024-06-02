@@ -92,7 +92,16 @@
      <widget class="QWidget" name="verticalLayoutWidget">
       <layout class="QVBoxLayout" name="verticalLayout_5">
        <item>
-        <widget class="QListWidget" name="list_widget_history"/>
+        <widget class="QGroupBox" name="groupBox_4">
+         <property name="title">
+          <string>History</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_6">
+          <item>
+           <widget class="QListWidget" name="list_widget_history"/>
+          </item>
+         </layout>
+        </widget>
        </item>
       </layout>
      </widget>

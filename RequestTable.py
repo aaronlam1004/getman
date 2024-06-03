@@ -48,7 +48,7 @@ class RequestTable(QtWidgets.QWidget):
             elif self.GetRowCount() > 1 and row < self.GetRowCount() - 1:
                     self.tablewidget_req_options.removeRow(row)
 
-    def GetRequestFields(self):
+    def GetFields(self):
         request_fields = {}
         for row in range(self.GetRowCount()):
             key_item = self.tablewidget_req_options.item(row, TABLE_HEADER_LABELS["Key"])
@@ -57,7 +57,9 @@ class RequestTable(QtWidgets.QWidget):
                 request_fields[key_item.text()] = value_item.text() if value_item is not None else ""
         return request_fields
 
-    def SetRequestFields(self, request_fields):
+    def SetFields(self, request_fields):
+        if len(request_fields) == 0:
+            self.tablewidget_req_options.clearContents()
         for i, (k, v) in enumerate(request_fields.items()):
             self.AddNewRow()
             self.tablewidget_req_options.setItem(i, 0, QTableWidgetItem(k))

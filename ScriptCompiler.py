@@ -91,27 +91,45 @@ class ScriptCompiler:
         compile_status["script"]["loops"].append(tuple())
         return False, command_str, ""
 
+
     @staticmethod
     def ProcessCommand(compile_status, command_str):
         for command in ScriptCommand:
             if command_str.startswith(command.name) and command_str.endswith(';'):
                 command_str = command_str.rstrip(';')
-                command_call, error_msg = ScriptCompiler.GetCommand(command, command_str)
+                variables = compile_status["script"]["vars"]
+                command_str = ScriptCompiler.EncodeVariablesToProcess(command_str, variables)
+                command_call, error_msg = ScriptCompiler.GetCommand(command, command_str, variables)
                 if command_call is not None:
-                    compile_status["script"]["commands"].append(command_call)
+                    compile_status["script"]["commands"].append(ScriptCompiler.DecodeVariablesForCommand(command_call, variables))
                     return True, ""
                 else:
                     return False, error_msg
         command_str = command_str.rstrip(';')
         if not command_str.isnumeric() and command_str not in ["True", "False"]:
-            compile_status["script"]["commands"].append('\"' + command_str + '\"')
+            compile_status["script"]["commands"].append(command_str)
         else:
             compile_status["script"]["commands"].append(command_str)
         return False, ""
-        
+    
+    @staticmethod
+    def EncodeVariablesToProcess(command_str, variables):
+        command = command_str
+        variable_str = ["{{" + variable + "}}" for variable in variables]
+        for i in range(len(variable_str)):
+            command = command.replace(variable_str[i], '"' + variable_str[i] + '"')
+        return command
 
     @staticmethod
-    def GetCommand(command, command_str):
+    def DecodeVariablesForCommand(command_str, variables):
+        command = command_str
+        variable_str = ["{{" + variable + "}}" for variable in variables]
+        for i in range(len(variable_str)):
+            command = command.replace('"' + variable_str[i] + '"', variable_str[i])
+        return command
+
+    @staticmethod
+    def GetCommand(command, command_str, variables):
         if command == ScriptCommand.SEND:
             json_str = command_str.replace(command.name + ' ', '')
             try:
@@ -125,8 +143,8 @@ class ScriptCompiler:
     @staticmethod
     def GetRequestCall(req_json):
         url = req_json["url"]
-        request_type = RequestTypes(req_json["method"])
+        request_type = req_json["method"]
         headers = req_json["headers"]
         body = req_json["json"]
         form = req_json["data"]
-        return f"RequestHandler.Request(\"{url}\", {request_type}, headers={headers}, body={body}, form={form})"
+        return f"RequestHandler.Request(\"{url}\", RequestTypes({request_type}), headers={headers}, body={body}, form={form})"

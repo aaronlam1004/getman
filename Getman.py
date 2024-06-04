@@ -51,7 +51,7 @@ class Getman(QtWidgets.QWidget):
         self.headers_table = RequestTable()
         self.params_table = RequestTable()
         self.body_selector = BodySelector()
-        self.script_ide = None
+        self.script_ide = ScriptIDE()
 
         self.InitActions()
         self.ConnectActions()
@@ -270,15 +270,13 @@ class GetmanApp(QtWidgets.QMainWindow):
 
     def InitializeScriptMenuOptions(self):
         script_menu = self.menu_bar.addMenu("Scripts")
-
         open_script_ide_action = QAction("Launch IDE", self)
         open_script_ide_action.triggered.connect(self.OpenScriptTool)
         script_menu.addAction(open_script_ide_action)
 
     def OpenScriptTool(self):
-        self.script_ide = ScriptIDE()
-        self.script_ide.request_script_signal.connect(self.script_ide.AddRequestToScript)
-        self.script_ide.show()
+        self.getman.script_ide.request_script_signal.connect(self.getman.script_ide.AddRequestToScript)
+        self.getman.script_ide.show()
 
 if __name__ == '__main__':
     q_application = QtWidgets.QApplication(sys.argv)

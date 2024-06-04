@@ -59,7 +59,7 @@
         <item>
          <widget class="QListWidget" name="list_script_steps">
           <property name="selectionMode">
-           <enum>QAbstractItemView::MultiSelection</enum>
+           <enum>QAbstractItemView::ExtendedSelection</enum>
           </property>
          </widget>
         </item>

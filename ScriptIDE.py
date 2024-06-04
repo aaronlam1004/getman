@@ -69,7 +69,7 @@ class ScriptIDE(QtWidgets.QWidget):
         if last_step is None or last_step.text() != "":
             self.AddScriptStep(step_text)
         else:
-            last_step.setText(script_text)
+            last_step.setText(step_text)
             self.list_script_steps.setCurrentRow(self.list_script_steps.count() - 1)
             self.te_script_step_editor.setFocus()
 
@@ -90,7 +90,7 @@ class ScriptIDE(QtWidgets.QWidget):
         if compile_status["status"] == CompileStatus.OK:
             script_runner = ScriptRunner()
             script_runner.Load(compile_status["script"])
-            script_output = script_runner.Run(debug_mode=True)
+            script_output = script_runner.Run(verbose=True)
             self.te_console_output.setText('\n'.join(script_output))
         else:
             error_output = f"Line {compile_status['line_number']} : {compile_status['error']}"

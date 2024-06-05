@@ -27,11 +27,29 @@
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
-       <widget class="QPushButton" name="pb_run_script">
-        <property name="text">
-         <string>Run</string>
-        </property>
-       </widget>
+       <layout class="QGridLayout" name="gridLayout">
+        <item row="1" column="0">
+         <widget class="QPushButton" name="pb_run_script">
+          <property name="text">
+           <string>Run</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QPushButton" name="pb_debug_script">
+          <property name="text">
+           <string>Debug</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QPushButton" name="pb_step_script">
+          <property name="text">
+           <string>Step</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
      </layout>
     </widget>

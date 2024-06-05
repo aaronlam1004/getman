@@ -143,7 +143,7 @@ class ScriptCompiler:
     @staticmethod
     def GetRequestCall(req_json):
         url = req_json["url"]
-        request_type = req_json["method"]
+        request_type = '"' + req_json["method"] + '"'
         headers = req_json["headers"]
         body = req_json["json"]
         form = req_json["data"]

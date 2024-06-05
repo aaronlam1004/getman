@@ -21,10 +21,17 @@ class ScriptIDE(QtWidgets.QWidget):
     def __init__(self, parent = None):
         super(ScriptIDE, self).__init__(parent)
         uic.loadUi('ui/ScriptIDE.ui', self)
+
+        # Setup editor
         self.highlighter = ScriptHighlighter(self.te_script_step_editor.document())
         self.list_script_steps_delegate = ScriptListDelegate(self.list_script_steps)
         self.list_script_steps.setItemDelegate(self.list_script_steps_delegate)
         self.te_script_step_editor.installEventFilter(self)
+
+        # Setup script runner
+        self.script_runner = ScriptRunner()
+        self.script_debugging = False
+        
         self.ConnectActions()
 
     def eventFilter(self, obj, event):
@@ -45,7 +52,9 @@ class ScriptIDE(QtWidgets.QWidget):
     def ConnectActions(self):
         self.list_script_steps.itemSelectionChanged.connect(self.EnableEditScriptStep)
         self.te_script_step_editor.textChanged.connect(self.UpdateScriptStep)
-        self.pb_run_script.clicked.connect(self.RunScript)
+        self.pb_run_script.clicked.connect(lambda: self.StartScript(debug=False))
+        self.pb_debug_script.clicked.connect(lambda: self.StartScript(debug=True))
+        self.pb_step_script.clicked.connect(lambda: self.RunScript(debug=True))
 
     def EnableEditScriptStep(self):
         if self.list_script_steps.currentItem() is not None:
@@ -82,19 +91,25 @@ class ScriptIDE(QtWidgets.QWidget):
         for item in self.list_script_steps.selectedItems():
             self.list_script_steps.takeItem(self.list_script_steps.row(item))
 
-    def RunScript(self):
+    def CompileScript(self):
         script_steps = []
         for i in range(self.list_script_steps.count()):
            script_steps.append(self.list_script_steps.item(i).text())
-        compile_status = ScriptCompiler.Compile(script_steps)
+        return script_steps
+
+    def StartScript(self, debug: bool = False):
+        compile_status = ScriptCompiler.Compile(self.CompileScript())
         if compile_status["status"] == CompileStatus.OK:
-            script_runner = ScriptRunner()
-            script_runner.Load(compile_status["script"])
-            script_output = script_runner.Run(verbose=True)
-            self.te_console_output.setText('\n'.join(script_output))
+            self.script_runner.Load(compile_status["script"])
+            if not debug:
+                self.RunScript()
         else:
             error_output = f"Line {compile_status['line_number']} : {compile_status['error']}"
             self.te_console_output.setText(error_output)
+
+    def RunScript(self, debug: bool = False):
+        script_output = self.script_runner.Run(verbose=True, step=True)
+        self.te_console_output.setText('\n'.join(script_output))
 
 if __name__ == '__main__':
     q_application = QtWidgets.QApplication(sys.argv)

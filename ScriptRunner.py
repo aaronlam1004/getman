@@ -10,13 +10,17 @@ class ScriptRunner:
 
     def Load(self, compiled_script):
         print(compiled_script)
+        self.step_num = 0
         self.script_variables = compiled_script.get("vars", [])
         self.script_commands = compiled_script.get("commands", [])
         self.script_loops = compiled_script.get("loops", [])
 
-    def Run(self, step_num=0, debug=False, verbose=False):
-        self.step_num = step_num
+    def GetVariables(self):
+        return self.variables
+
+    def Run(self, step=False, verbose=False):
         script_output = []
+        command = ""
         try:
             while self.step_num < len(self.script_commands):
                 command = self.SubsituteVariablesForCommand(self.script_commands[self.step_num])
@@ -35,10 +39,12 @@ class ScriptRunner:
                     if result_str != "":
                         script_output.append(result_str)
                 self.step_num += 1
-                if debug:
+                if step:
                     break
         except Exception as exception:
-            script_output.append(str(f"Line {self.step_num}: {exception}"))
+            if verbose:
+                script_output.append(f"> {command}")
+            script_output.append(str(f"Line {self.step_num + 1}: {exception}"))
         print(self.variables)
         return script_output
 
@@ -46,10 +52,8 @@ class ScriptRunner:
         command = command_str
         variables = ["{{" + variable + "}}" for variable in self.variables]
         for idx, v in enumerate(self.variables):
-            if type(self.variables[v]) is str:
-                command = command.replace(variables[idx], '"' + self.variables[v] + '"')
-            else:
-                command = command.replace(variables[idx], str(self.variables[v]))
+            command = command.replace('"' + variables[idx] + '"', f'f"{{{variables[idx]}}}"')
+            command = command.replace(variables[idx], f"self.variables['{v}']")
         return command
 
     def Stop(self):

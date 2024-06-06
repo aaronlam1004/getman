@@ -22,10 +22,10 @@ class RequestHandler:
         return json.dumps(request_json)
 
     @staticmethod
-    def Request(url, request_type, headers={}, body={}, form={}):
+    def Request(url, request_type, params={}, headers={}, body={}, form={}):
         response = {}
         session = requests.Session()
-        request = requests.Request(request_type.value, url, headers=headers, json=body, data=form)
+        request = requests.Request(request_type.value, url, params=params, headers=headers, json=body, data=form)
         res = session.send(request.prepare())
         try:
             response = res.json()

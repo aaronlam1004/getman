@@ -36,7 +36,7 @@ REQUEST_TYPE_UI = {
 }
 
 class Getman(QtWidgets.QWidget):
-    response_signal = pyqtSignal(dict)
+    response_signal = pyqtSignal(object)
     update_title_signal = pyqtSignal(str)
 
     def __init__(self, parent=None, update_title=None):
@@ -92,6 +92,7 @@ class Getman(QtWidgets.QWidget):
         workspace_json = self.GetEmptyWorkspace()
         workspace_json["url"] = self.le_url.text()
         workspace_json["request_type"] = self.cbox_request_type.currentText()
+        workspace_json["params"] = self.params_table.GetFields()
         workspace_json["headers"] = self.headers_table.GetFields()
         body_selection, body_data = self.body_selector.GetBodyData(json_string = True)
         workspace_json["body"]["body_selection"] = body_selection
@@ -139,11 +140,12 @@ class Getman(QtWidgets.QWidget):
     def LoadWorkspace(self, workspace_json: dict):
         self.le_url.setText(workspace_json["url"])
         self.cbox_request_type.setCurrentText(workspace_json["request_type"])
+        self.params_table.SetFields(workspace_json["params"])
         self.headers_table.SetFields(workspace_json["headers"])
         self.body_selector.LoadState(workspace_json)
 
     def CloseWorkspace(self):
-        self.SetWorkspace(TEMP_WORKSPACE)
+        self.SetWorkspace(TEMP_WORKSPACE, reset_temp_workspace=True)
 
     def InitActions(self):
         self.tabwidget_req_settings.addTab(self.headers_table, "Headers")
@@ -185,6 +187,7 @@ class Getman(QtWidgets.QWidget):
         url = self.le_url.text()
         if url != "":
             headers = self.headers_table.GetFields()
+            params = self.params_table.GetFields()
             form = {}
             body = {}
             body_selection, body_data = self.body_selector.GetBodyData()
@@ -192,7 +195,7 @@ class Getman(QtWidgets.QWidget):
                 form = body_data
             if body_selection == BodySelection.JSON:
                 body = body_data
-            request, response_json = RequestHandler.Request(url, self.cbox_request_type.currentData(), headers=headers, body=body, form=form)
+            request, response_json = RequestHandler.Request(url, self.cbox_request_type.currentData(), params=params, headers=headers, body=body, form=form)
             self.AddRequestHistory(RequestHandler.GetJsonFromRequest(request))
             self.response_signal.emit(response_json)
 
@@ -205,7 +208,7 @@ class Getman(QtWidgets.QWidget):
     def LoadHistoryState(self):
         self.LoadWorkspace(self.request_history[self.list_widget_history.currentRow()])
 
-    @pyqtSlot(dict)
+    @pyqtSlot(object)
     def ProcessResponse(self, response: dict):
         self.list_widget_responses.addItem(QListWidgetItem(json.dumps(response)))
 

@@ -1,6 +1,3 @@
-# TODO: handle params
-# TODO: handle queries
-
 import sys
 import os
 import json
@@ -8,15 +5,22 @@ import signal
 import configparser
 from enum import Enum
 
+FILE_PATH = os.path.dirname(__file__)
+GETSCRIPT_PATH = os.path.join(FILE_PATH, 'getscript')
+sys.path.append(GETSCRIPT_PATH)
+
 from PyQt5 import QtWidgets, QtCore, uic
 from PyQt5.QtWidgets import QMenuBar, QAction, QListWidgetItem, QFileDialog, QMessageBox
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt
 from PyQt5.QtGui import QBrush, QColor, QFont
 
+from Defines import REQUEST_TYPE_COLORS
 from RequestTable import RequestTable
 from BodySelector import BodySelection, BodySelector
+
+from Utils import GetUiPath
 from RequestHandler import RequestTypes, RequestHandler
-from ScriptIDE import ScriptIDE
+from GetScriptIDE import GetScriptIDE
 from JsonHighlighter import JsonHighlighter
 
 TEMP_WORKSPACE_NAME = ".workspace~"
@@ -25,23 +29,13 @@ TEMP_WORKSPACE = os.path.join(os.path.dirname(os.path.abspath(__file__)), TEMP_W
 CONFIG_FILE_NAME = "config.ini"
 CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), CONFIG_FILE_NAME)
 
-REQUEST_TYPE_UI = {
-    RequestTypes.GET: "#08C751",
-    RequestTypes.POST: "#DEB11F",
-    RequestTypes.PUT: "#143EC9",
-    RequestTypes.PATCH: "#7D11BF",
-    RequestTypes.DELETE: "#C41B0C",
-    RequestTypes.HEAD: "#C90E85",
-    RequestTypes.OPTIONS: "#7FB80D"
-}
-
 class Getman(QtWidgets.QWidget):
     response_signal = pyqtSignal(object)
     update_title_signal = pyqtSignal(str)
 
     def __init__(self, parent=None, update_title=None):
         super(Getman, self).__init__(parent)
-        uic.loadUi('ui/Getman.ui', self)
+        uic.loadUi(GetUiPath(__file__, 'ui/Getman.ui'), self)
 
         if update_title is not None:
             self.update_title_signal.connect(update_title)
@@ -51,7 +45,7 @@ class Getman(QtWidgets.QWidget):
         self.headers_table = RequestTable()
         self.params_table = RequestTable()
         self.body_selector = BodySelector()
-        self.script_ide = ScriptIDE()
+        self.script_ide = GetScriptIDE()
 
         self.InitActions()
         self.ConnectActions()
@@ -168,14 +162,14 @@ class Getman(QtWidgets.QWidget):
         self.InitializeRequestTypes()
 
     def ChangeRequestTypesColor(self):
-        color = REQUEST_TYPE_UI[self.cbox_request_type.currentData()]
+        color = REQUEST_TYPE_COLORS[self.cbox_request_type.currentData()]
         font = QFont()
         font.setBold(True)
         self.cbox_request_type.lineEdit().setFont(font)
         self.cbox_request_type.lineEdit().setStyleSheet(f"color: {color}")
 
     def InitializeRequestTypes(self):
-        for i, (request_type, color) in enumerate(REQUEST_TYPE_UI.items()):
+        for i, (request_type, color) in enumerate(REQUEST_TYPE_COLORS.items()):
             font = QFont()
             font.setBold(True)
             brush = QBrush(QColor(color))

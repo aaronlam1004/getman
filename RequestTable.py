@@ -6,6 +6,8 @@ from PyQt5 import QtWidgets, QtCore, uic
 from PyQt5.QtWidgets import QTableWidgetItem
 from PyQt5.QtCore import Qt
 
+from Utils import GetUiPath
+
 TABLE_HEADER_LABELS = {
     "Key": 0,
     "Value": 1,
@@ -15,7 +17,7 @@ TABLE_HEADER_LABELS = {
 class RequestTable(QtWidgets.QWidget):
     def __init__(self, parent = None):
         super(RequestTable, self).__init__(parent)
-        uic.loadUi('ui/RequestTable.ui', self)
+        uic.loadUi(GetUiPath(__file__, 'ui/RequestTable.ui'), self)
         self.ConnectActions()
 
     def ConnectActions(self):

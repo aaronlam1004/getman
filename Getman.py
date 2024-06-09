@@ -12,7 +12,7 @@ sys.path.append(GETSCRIPT_PATH)
 from PyQt5 import QtWidgets, QtCore, uic
 from PyQt5.QtWidgets import QMenuBar, QAction, QListWidgetItem, QFileDialog, QMessageBox
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt
-from PyQt5.QtGui import QBrush, QColor, QFont
+from PyQt5.QtGui import QBrush, QColor, QFont, QStandardItemModel
 
 from Defines import REQUEST_TYPE_COLORS
 from RequestTable import RequestTable
@@ -29,6 +29,14 @@ TEMP_WORKSPACE = os.path.join(os.path.dirname(os.path.abspath(__file__)), TEMP_W
 CONFIG_FILE_NAME = "config.ini"
 CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), CONFIG_FILE_NAME)
 
+class RequestModel:
+    MODEL_HEADERS = ["Name", "Type"]
+    def __init__(self, parent):
+        self.model = QStandardItemModel(0, len(self.MODEL_HEADERS), parent)
+        self.model.setHeaderData(0, Qt.Horizontal, "Name")
+        self.model.setHeaderData(1, Qt.Horizontal, "Type")
+    
+
 class Getman(QtWidgets.QWidget):
     response_signal = pyqtSignal(object)
     update_title_signal = pyqtSignal(str)
@@ -40,12 +48,13 @@ class Getman(QtWidgets.QWidget):
         if update_title is not None:
             self.update_title_signal.connect(update_title)
 
-        self.request_history = []
         self.response_highlighter = JsonHighlighter(self.te_response_json.document())
         self.headers_table = RequestTable()
         self.params_table = RequestTable()
         self.body_selector = BodySelector()
         self.script_ide = GetScriptIDE()
+        self.request_model = RequestModel(self)
+        self.tree_view_explorer.setModel(self.request_model.model)
 
         self.InitActions()
         self.ConnectActions()
@@ -58,6 +67,8 @@ class Getman(QtWidgets.QWidget):
             self.config["workspace"] = { "file": TEMP_WORKSPACE_NAME }
 
         # Workspace
+        self.workspace_file = ""
+        self.workspace_folder = ""
         if "workspace" in self.config and "file" in self.config["workspace"]:
             self.SetWorkspace(self.config["workspace"]["file"])
         else:
@@ -154,9 +165,9 @@ class Getman(QtWidgets.QWidget):
         self.cbox_request_type.setStyleSheet("selection-background-color: rgb(0, 0, 0)")
 
     def ConnectActions(self):
+        self.pb_add_getman_request.clicked.connect(self.AddGetmanRequest)
         self.pb_send.clicked.connect(self.SendRequest)
         self.response_signal.connect(self.ProcessResponse)
-        self.list_widget_history.selectionModel().selectionChanged.connect(self.LoadHistoryState)
         self.list_widget_responses.selectionModel().selectionChanged.connect(self.DisplayResponseJson)
         self.cbox_request_type.currentTextChanged.connect(self.ChangeRequestTypesColor)
         self.InitializeRequestTypes()
@@ -176,6 +187,9 @@ class Getman(QtWidgets.QWidget):
             self.cbox_request_type.addItem(request_type.value, userData=request_type)
             self.cbox_request_type.setItemData(i, brush, Qt.TextColorRole)
             self.cbox_request_type.setItemData(i, font, Qt.FontRole)
+
+    def AddGetmanRequest(self):
+        pass
 
     def SendRequest(self):
         url = self.le_url.text()
@@ -199,19 +213,14 @@ class Getman(QtWidgets.QWidget):
             response_json = json.loads(response)
             self.te_response_json.setText(json.dumps(response_json, indent=4))
 
-    def LoadHistoryState(self):
-        self.LoadWorkspace(self.request_history[self.list_widget_history.currentRow()])
-
     @pyqtSlot(object)
     def ProcessResponse(self, response: dict):
         self.list_widget_responses.addItem(QListWidgetItem(json.dumps(response)))
 
-    def AddRequestHistory(self, request):
-        workspace_json = self.GetWorkspace()
-        self.request_history.append(workspace_json)
-        self.list_widget_history.addItem(str(workspace_json))
+    def AddRequestHistory(self, request_json):
+        self.list_widget_history.addItem(request_json)
         if self.script_ide != None:
-            self.script_ide.request_script_signal.emit(request)
+            self.script_ide.request_script_signal.emit(request_json)
 
 class GetmanApp(QtWidgets.QMainWindow):   
     def __init__(self):
@@ -266,10 +275,11 @@ class GetmanApp(QtWidgets.QMainWindow):
         file_menu.addAction(exit_action)
 
     def InitializeScriptMenuOptions(self):
-        script_menu = self.menu_bar.addMenu("Scripts")
-        open_script_ide_action = QAction("Launch IDE", self)
-        open_script_ide_action.triggered.connect(self.OpenScriptTool)
-        script_menu.addAction(open_script_ide_action)
+        pass 
+        # script_menu = self.menu_bar.addMenu("Scripts")
+        # open_script_ide_action = QAction("Launch IDE", self)
+        # open_script_ide_action.triggered.connect(self.OpenScriptTool)
+        # script_menu.addAction(open_script_ide_action)
 
     def OpenScriptTool(self):
         self.getman.script_ide.request_script_signal.connect(self.getman.script_ide.AddRequestToScript)

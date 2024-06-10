@@ -10,43 +10,49 @@ GETSCRIPT_PATH = os.path.join(FILE_PATH, 'getscript')
 sys.path.append(GETSCRIPT_PATH)
 
 from PyQt5 import QtWidgets, QtCore, uic
-from PyQt5.QtWidgets import QMenuBar, QAction, QListWidgetItem, QFileDialog, QMessageBox
+from PyQt5.QtWidgets import QMenuBar, QAction, QListWidgetItem, QInputDialog, QMessageBox
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt
 from PyQt5.QtGui import QBrush, QColor, QFont, QStandardItemModel
 
 from Defines import REQUEST_TYPE_COLORS
 from RequestTable import RequestTable
 from BodySelector import BodySelection, BodySelector
+from Workspace import Workspace, TEMP_WORKSPACE_NAME
 
 from Utils import GetUiPath
 from RequestHandler import RequestTypes, RequestHandler
 from GetScriptIDE import GetScriptIDE
 from JsonHighlighter import JsonHighlighter
 
-TEMP_WORKSPACE_NAME = ".workspace~"
-TEMP_WORKSPACE = os.path.join(os.path.dirname(os.path.abspath(__file__)), TEMP_WORKSPACE_NAME)
-
-CONFIG_FILE_NAME = "config.ini"
-CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), CONFIG_FILE_NAME)
-
 class RequestModel:
-    MODEL_HEADERS = ["Name", "Type"]
+    NAME, TYPE = range(2)
     def __init__(self, parent):
-        self.model = QStandardItemModel(0, len(self.MODEL_HEADERS), parent)
-        self.model.setHeaderData(0, Qt.Horizontal, "Name")
-        self.model.setHeaderData(1, Qt.Horizontal, "Type")
+        self.model = QStandardItemModel(0, 2, parent)
+        self.model.setHeaderData(self.NAME, Qt.Horizontal, "Name")
+        self.model.setHeaderData(self.TYPE, Qt.Horizontal, "Type")
+        self.count = 0
+
+    def AddToModel(self, request_name="", request_type=""):
+        self.model.insertRow(self.count)
+        self.model.setData(self.model.index(self.count, self.NAME), request_name)
+        self.model.setData(self.model.index(self.count, self.TYPE), request_type)
+        self.model.item(self.count, self.TYPE).setEditable(False)
+        self.count += 1
+
+    def GetFromModel(self, row, col):
+        return self.model.item(row, col)
     
 
 class Getman(QtWidgets.QWidget):
     response_signal = pyqtSignal(object)
-    update_title_signal = pyqtSignal(str)
+    workspace_updated_signal = pyqtSignal()
 
-    def __init__(self, parent=None, update_title=None):
+    def __init__(self, parent=None):
         super(Getman, self).__init__(parent)
         uic.loadUi(GetUiPath(__file__, 'ui/Getman.ui'), self)
-
-        if update_title is not None:
-            self.update_title_signal.connect(update_title)
+        self.parent = parent
+        
+        self.request_json = self.GetEmptyRequest()
 
         self.response_highlighter = JsonHighlighter(self.te_response_json.document())
         self.headers_table = RequestTable()
@@ -59,98 +65,8 @@ class Getman(QtWidgets.QWidget):
         self.InitActions()
         self.ConnectActions()
 
-        # Configuration file
-        self.config = configparser.ConfigParser()
-        if os.path.exists(CONFIG_FILE):
-            self.config.read(CONFIG_FILE)
-        else:
-            self.config["workspace"] = { "file": TEMP_WORKSPACE_NAME }
-
-        # Workspace
-        self.workspace_file = ""
-        self.workspace_folder = ""
-        if "workspace" in self.config and "file" in self.config["workspace"]:
-            self.SetWorkspace(self.config["workspace"]["file"])
-        else:
-            self.SetWorkspace(TEMP_WORKSPACE)
-
-    def UpdateConfig(self):
-        if "workspace" not in self.config.sections() or "file" not in self.config["workspace"]:
-            self.config["workspace"] = { "file": self.workspace_file }
-        else:
-            self.config["workspace"]["file"] = self.workspace_file
-        with open(CONFIG_FILE, 'w') as config_file:
-            self.config.write(config_file)
-
-    def GetEmptyWorkspace(self):
-        return {
-            "url": "",
-            "request_type": "GET",
-            "headers": {},
-            "body": {
-                "body_selection": BodySelection.NONE,
-                "body_data" : {}
-            }
-        }
-
-    def GetWorkspace(self):
-        workspace_json = self.GetEmptyWorkspace()
-        workspace_json["url"] = self.le_url.text()
-        workspace_json["request_type"] = self.cbox_request_type.currentText()
-        workspace_json["params"] = self.params_table.GetFields()
-        workspace_json["headers"] = self.headers_table.GetFields()
-        body_selection, body_data = self.body_selector.GetBodyData(json_string = True)
-        workspace_json["body"]["body_selection"] = body_selection
-        workspace_json["body"]["body_data"] = body_data
-        return workspace_json
-
-    def SetWorkspace(self, workspace_file, reset_temp_workspace: bool = False):
-        self.workspace_file = workspace_file
-        self.UpdateConfig()
-        if self.workspace_file != TEMP_WORKSPACE:
-            self.ReadWorkspace()
-            self.update_title_signal.emit(f"Getman - {self.workspace_file}")
-        else:
-            self.update_title_signal.emit("Getman - Untitled")
-            if reset_temp_workspace:
-                self.LoadWorkspace(self.GetEmptyWorkspace())
-
-    def SaveWorkspace(self, save_dialog: bool = False):
-        self.UpdateConfig()
-        workspace_json = self.GetWorkspace()
-        workspace_file = self.workspace_file
-        if save_dialog or workspace_file == TEMP_WORKSPACE:
-            workspace_file, _ = QFileDialog.getSaveFileName(self, "Save workspace", "", "Workspace (*.workspace)")
-        if workspace_file != "":
-            with open(workspace_file, 'w') as workspace_save_file:
-                json.dump(workspace_json, workspace_save_file, indent=4)
-            if self.workspace_file != workspace_file:
-                self.SetWorkspace(workspace_file)
-
-    def OpenWorkspace(self):
-        workspace_file, _ = QFileDialog.getOpenFileName(self, "Open workspace", "", "Workspace (*.workspace)")
-        if workspace_file != "":
-            self.SetWorkspace(workspace_file)
-
-    def ReadWorkspace(self):
-        if os.path.exists(self.workspace_file):
-            with open(self.workspace_file, 'r') as workspace_file:
-                try:
-                    workspace_json = json.loads(workspace_file.read())
-                    self.LoadWorkspace(workspace_json)                
-                except Exception as exception:
-                    self.workspace_file = TEMP_WORKSPACE
-                    print(f"Exception occured while to load the state: {exception}")
-
-    def LoadWorkspace(self, workspace_json: dict):
-        self.le_url.setText(workspace_json["url"])
-        self.cbox_request_type.setCurrentText(workspace_json["request_type"])
-        self.params_table.SetFields(workspace_json["params"])
-        self.headers_table.SetFields(workspace_json["headers"])
-        self.body_selector.LoadState(workspace_json)
-
-    def CloseWorkspace(self):
-        self.SetWorkspace(TEMP_WORKSPACE, reset_temp_workspace=True)
+        self.workspace = Workspace(self.workspace_updated_signal) 
+        self.workspace.Init()
 
     def InitActions(self):
         self.tabwidget_req_settings.addTab(self.headers_table, "Headers")
@@ -165,12 +81,21 @@ class Getman(QtWidgets.QWidget):
         self.cbox_request_type.setStyleSheet("selection-background-color: rgb(0, 0, 0)")
 
     def ConnectActions(self):
-        self.pb_add_getman_request.clicked.connect(self.AddGetmanRequest)
+        # Explorer
+        self.tree_view_explorer.selectionModel().selectionChanged.connect(self.SetRequest)
+        self.workspace_updated_signal.connect(self.HandleWorkspaceUpdated)
+
+        # Request
+        self.pb_add_getman_request.clicked.connect(self.AddRequest)
         self.pb_send.clicked.connect(self.SendRequest)
-        self.response_signal.connect(self.ProcessResponse)
-        self.list_widget_responses.selectionModel().selectionChanged.connect(self.DisplayResponseJson)
         self.cbox_request_type.currentTextChanged.connect(self.ChangeRequestTypesColor)
         self.InitializeRequestTypes()
+
+        # Response
+        self.response_signal.connect(self.ProcessResponse)
+
+        # History
+        self.list_widget_responses.selectionModel().selectionChanged.connect(self.DisplayResponseJson)
 
     def ChangeRequestTypesColor(self):
         color = REQUEST_TYPE_COLORS[self.cbox_request_type.currentData()]
@@ -188,8 +113,72 @@ class Getman(QtWidgets.QWidget):
             self.cbox_request_type.setItemData(i, brush, Qt.TextColorRole)
             self.cbox_request_type.setItemData(i, font, Qt.FontRole)
 
-    def AddGetmanRequest(self):
-        pass
+    def HandleWorkspaceUpdated(self):
+        for request in self.workspace.requests:
+            request_json = self.ReadRequest(self.workspace.GetRequestJsonPath(request))
+            self.request_model.AddToModel(request, request_json["request_type"])
+        workspace = self.workspace.name if self.workspace.name != TEMP_WORKSPACE_NAME else "Untitled"
+        title = f"Getman - {workspace}"
+        if self.parent is None:
+            self.setWindowTitle(title)
+        else:
+            self.parent.setWindowTitle(title)
+
+    def SaveWorkspace(self, save_dialog: bool = False):
+        if save_dialog or self.workspace.name == TEMP_WORKSPACE_NAME:
+            name, ok = QInputDialog.getText(self, "Workspace", "Enter name of workspace:")
+            if ok and name != "":
+                self.workspace.SaveWorkspace(name, overwrite=True)
+
+    def GetEmptyRequest(self):
+        return {
+            "name": "",
+            "url": "",
+            "request_type": "GET",
+            "headers": {},
+            "body": {
+                "body_selection": BodySelection.NONE,
+                "body_data" : {}
+            }
+        }
+    
+    def ReadRequest(self, request_file):
+        request_json = {}
+        if os.path.exists(request_file):
+            try:
+                with open(request_file, 'r') as request:
+                    request_json = json.loads(request.read())
+            except Exception as exception:
+                print(exception)
+        return request_json
+
+    def GetRequest(self):
+        request_json = self.GetEmptyRequest()
+        request_json["url"] = self.le_url.text()
+        request_json["request_type"] = self.cbox_request_type.currentText()
+        request_json["params"] = self.params_table.GetFields()
+        request_json["headers"] = self.headers_table.GetFields()
+        body_selection, body_data = self.body_selector.GetBodyData(json_string = True)
+        request_json["body"]["body_selection"] = body_selection
+        request_json["body"]["body_data"] = body_data
+        return request_json
+
+    def LoadRequest(self, request_json: dict):
+        self.le_url.setText(request_json["url"])
+        self.cbox_request_type.setCurrentText(request_json["request_type"])
+        self.params_table.SetFields(request_json["params"])
+        self.headers_table.SetFields(request_json["headers"])
+        self.body_selector.LoadState(request_json)
+
+    def SetRequest(self, selected, deselected):
+        for selected_index in selected.indexes():
+            if selected_index.column() == self.request_model.NAME:
+                name = self.request_model.GetFromModel(selected_index.row(), selected_index.column()).text()
+                self.request_json = self.ReadRequest(self.workspace.GetRequestJsonPath(name))
+                self.LoadRequest(self.request_json)
+
+    def AddRequest(self):
+        pass 
 
     def SendRequest(self):
         url = self.le_url.text()
@@ -226,7 +215,7 @@ class GetmanApp(QtWidgets.QMainWindow):
     def __init__(self):
         super(GetmanApp, self).__init__()
         self.setWindowTitle("Getman")
-        self.getman = Getman(update_title=self.UpdateWindowTitle)
+        self.getman = Getman(self)
         self.setCentralWidget(self.getman)
         self.InitializeMenu()
         self.showMaximized()
@@ -240,10 +229,6 @@ class GetmanApp(QtWidgets.QMainWindow):
             super(GetmanApp, self).closeEvent(event)
         else:
             event.ignore()
-
-    @pyqtSlot(str)
-    def UpdateWindowTitle(self, title):
-        self.setWindowTitle(title)
 
     def InitializeMenu(self):
         self.menu_bar = QMenuBar(self)
@@ -263,11 +248,11 @@ class GetmanApp(QtWidgets.QMainWindow):
         file_menu.addAction(save_as_action)
 
         open_action = QAction("Open", self)
-        open_action.triggered.connect(self.getman.OpenWorkspace)
+        open_action.triggered.connect(self.getman.workspace.OpenWorkspace)
         file_menu.addAction(open_action)
 
         close_action = QAction("Close", self)
-        close_action.triggered.connect(self.getman.CloseWorkspace)
+        close_action.triggered.connect(self.getman.workspace.CloseWorkspace)
         file_menu.addAction(close_action)
 
         exit_action = QAction("Exit", self)

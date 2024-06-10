@@ -49,6 +49,6 @@ Thumbs.db
 *.wmv
 
 # Getman files
+workspaces
 *.workspace
-.workspace~
 *.ini

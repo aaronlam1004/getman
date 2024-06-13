@@ -7,12 +7,10 @@ import shutil
 from PyQt5.QtWidgets import QInputDialog
 
 FILE_PATH = os.path.dirname(os.path.abspath(__file__))
-WORKSPACE_PATH = os.path.join(FILE_PATH, "workspaces")
+WORKSPACE_PATH = os.path.join(FILE_PATH, ".workspaces")
 
 CONFIG_FILE_NAME = "config.ini"
 CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), CONFIG_FILE_NAME)
-
-TEMP_WORKSPACE_NAME = ".workspace~"
 
 class Workspace:
     def __init__(self, workspace_updated):
@@ -30,13 +28,13 @@ class Workspace:
         if os.path.exists(CONFIG_FILE):
             self.config.read(CONFIG_FILE)
         else:
-            self.config["workspace"] = { "name": TEMP_WORKSPACE_NAME }
+            self.config["workspace"] = { "name": "" }
 
         # Workspace
         if "workspace" in self.config and "name" in self.config["workspace"]:
             self.SetWorkspace(self.config["workspace"]["name"])
         else:
-            self.SetWorkspace(TEMP_WORKSPACE_NAME)
+            self.SetWorkspace("")
 
     def UpdateConfig(self):
         if "workspace" not in self.config.sections() or "name" not in self.config["workspace"]:
@@ -64,7 +62,7 @@ class Workspace:
         if os.path.isdir(request_dir):
             shutil.rmtree(request_dir)
 
-        if self.name != TEMP_WORKSPACE_NAME:
+        if self.name != "":
             workspace_request_dir = os.path.join(self.path, "requests")
             if os.path.exists(self.path) and os.path.exists(workspace_request_dir):
                 shutil.copytree(workspace_request_dir, request_dir)
@@ -72,16 +70,10 @@ class Workspace:
                 os.makedirs(request_dir, exist_ok=True)
         self.SetWorkspace(workspace_name)
         self.UpdateConfig()
-
+        return True
  
-    def OpenWorkspace(self):
-        pass
-        # workspace, _ = QFileDialog.getOpenFileName(self, "Open workspace", "", "Workspace (*.workspace)")
-        # if workspace != "":
-        #     self.SetWorkspace(workspace)
-
     def LoadWorkspace(self):
-        if self.name == TEMP_WORKSPACE_NAME:
+        if self.name == "":
             self.path = ""
         else:
             self.path = os.path.join(WORKSPACE_PATH, self.name)

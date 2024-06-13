@@ -12,35 +12,39 @@ sys.path.append(GETSCRIPT_PATH)
 from PyQt5 import QtWidgets, QtCore, uic
 from PyQt5.QtWidgets import QMenuBar, QAction, QListWidgetItem, QInputDialog, QMessageBox
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt
-from PyQt5.QtGui import QBrush, QColor, QFont, QStandardItemModel
+from PyQt5.QtGui import QBrush, QColor, QFont, QStandardItemModel, QStandardItem
 
 from Defines import REQUEST_TYPE_COLORS
 from RequestTable import RequestTable
 from BodySelector import BodySelection, BodySelector
-from Workspace import Workspace, TEMP_WORKSPACE_NAME
+from Workspace import Workspace, WORKSPACE_PATH
 
 from Utils import GetUiPath
 from RequestHandler import RequestTypes, RequestHandler
 from GetScriptIDE import GetScriptIDE
 from JsonHighlighter import JsonHighlighter
 
-class RequestModel:
+class ExplorerModel:
     NAME, TYPE = range(2)
     def __init__(self, parent):
         self.model = QStandardItemModel(0, 2, parent)
-        self.model.setHeaderData(self.NAME, Qt.Horizontal, "Name")
-        self.model.setHeaderData(self.TYPE, Qt.Horizontal, "Type")
+        self.model.setHorizontalHeaderLabels(["Name", "Type"])
         self.count = 0
 
     def AddToModel(self, request_name="", request_type=""):
-        self.model.insertRow(self.count)
-        self.model.setData(self.model.index(self.count, self.NAME), request_name)
-        self.model.setData(self.model.index(self.count, self.TYPE), request_type)
-        self.model.item(self.count, self.TYPE).setEditable(False)
+        req_name = QStandardItem(request_name)
+        req_type = QStandardItem(request_type)
+        req_type.setEditable(False)
+        self.model.appendRow([req_name, req_type])
         self.count += 1
 
     def GetFromModel(self, row, col):
         return self.model.item(row, col)
+
+    def ClearModel(self):
+        self.model.clear()
+        self.model.setHorizontalHeaderLabels(["Name", "Type"])
+        self.count = 0
     
 
 class Getman(QtWidgets.QWidget):
@@ -59,8 +63,8 @@ class Getman(QtWidgets.QWidget):
         self.params_table = RequestTable()
         self.body_selector = BodySelector()
         self.script_ide = GetScriptIDE()
-        self.request_model = RequestModel(self)
-        self.tree_view_explorer.setModel(self.request_model.model)
+        self.explorer_model = ExplorerModel(self)
+        self.tree_view_explorer.setModel(self.explorer_model.model)
 
         self.InitActions()
         self.ConnectActions()
@@ -114,10 +118,11 @@ class Getman(QtWidgets.QWidget):
             self.cbox_request_type.setItemData(i, font, Qt.FontRole)
 
     def HandleWorkspaceUpdated(self):
+        self.explorer_model.ClearModel()
         for request in self.workspace.requests:
             request_json = self.ReadRequest(self.workspace.GetRequestJsonPath(request))
-            self.request_model.AddToModel(request, request_json["request_type"])
-        workspace = self.workspace.name if self.workspace.name != TEMP_WORKSPACE_NAME else "Untitled"
+            self.explorer_model.AddToModel(request, request_json["request_type"])
+        workspace = self.workspace.name if self.workspace.name != "" else "Untitled"
         title = f"Getman - {workspace}"
         if self.parent is None:
             self.setWindowTitle(title)
@@ -125,10 +130,22 @@ class Getman(QtWidgets.QWidget):
             self.parent.setWindowTitle(title)
 
     def SaveWorkspace(self, save_dialog: bool = False):
-        if save_dialog or self.workspace.name == TEMP_WORKSPACE_NAME:
+        if save_dialog or self.workspace.name == "":
             name, ok = QInputDialog.getText(self, "Workspace", "Enter name of workspace:")
             if ok and name != "":
-                self.workspace.SaveWorkspace(name, overwrite=True)
+                saved = self.workspace.SaveWorkspace(name, overwrite=False)
+                if not saved:
+                    overwrite = QMessageBox.question(self, "Overwrite workspace?", f"Workspace {name} already exists. Would you like to overwrite it?", QMessageBox.Yes | QMessageBox.No)
+                    if overwrite == QMessageBox.Yes:
+                        self.workspace.SaveWorkspace(name, overwrite=True)
+
+    def OpenWorkspace(self):
+        if os.path.exists(WORKSPACE_PATH):
+            workspaces = os.listdir(WORKSPACE_PATH)
+            if len(workspaces) > 0:
+                workspace, ok = QInputDialog.getItem(self, "Workspace", "Select workspace:", workspaces, 0, False)
+                if ok and workspace != "":
+                    self.workspace.SetWorkspace(workspace)
 
     def GetEmptyRequest(self):
         return {
@@ -152,6 +169,13 @@ class Getman(QtWidgets.QWidget):
                 print(exception)
         return request_json
 
+    def SetRequest(self, selected, deselected):
+        for selected_index in selected.indexes():
+            if selected_index.column() == self.explorer_model.NAME:
+                name = self.explorer_model.GetFromModel(selected_index.row(), selected_index.column()).text()
+                self.request_json = self.ReadRequest(self.workspace.GetRequestJsonPath(name))
+                self.LoadRequest(self.request_json)
+
     def GetRequest(self):
         request_json = self.GetEmptyRequest()
         request_json["url"] = self.le_url.text()
@@ -170,15 +194,10 @@ class Getman(QtWidgets.QWidget):
         self.headers_table.SetFields(request_json["headers"])
         self.body_selector.LoadState(request_json)
 
-    def SetRequest(self, selected, deselected):
-        for selected_index in selected.indexes():
-            if selected_index.column() == self.request_model.NAME:
-                name = self.request_model.GetFromModel(selected_index.row(), selected_index.column()).text()
-                self.request_json = self.ReadRequest(self.workspace.GetRequestJsonPath(name))
-                self.LoadRequest(self.request_json)
-
     def AddRequest(self):
-        pass 
+        name, ok = QInputDialog.getText(self, "Request", "Enter name of request:")
+        if ok and name != "":
+            print(name)
 
     def SendRequest(self):
         url = self.le_url.text()
@@ -221,9 +240,9 @@ class GetmanApp(QtWidgets.QMainWindow):
         self.showMaximized()
 
     def closeEvent(self, event):
-        save_question = QMessageBox.question(self, "Save workspace?", "Do you want to save your workspace before exiting?", QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
-        close = (save_question == QMessageBox.Yes) or (save_question == QMessageBox.No)
-        if save_question == QMessageBox.Yes:
+        save = QMessageBox.question(self, "Save workspace?", "Do you want to save your workspace before exiting?", QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
+        close = (save == QMessageBox.Yes) or (save == QMessageBox.No)
+        if save == QMessageBox.Yes:
             self.getman.SaveWorkspace()
         if close:
             super(GetmanApp, self).closeEvent(event)
@@ -248,7 +267,7 @@ class GetmanApp(QtWidgets.QMainWindow):
         file_menu.addAction(save_as_action)
 
         open_action = QAction("Open", self)
-        open_action.triggered.connect(self.getman.workspace.OpenWorkspace)
+        open_action.triggered.connect(self.getman.OpenWorkspace)
         file_menu.addAction(open_action)
 
         close_action = QAction("Close", self)

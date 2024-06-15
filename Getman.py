@@ -31,21 +31,20 @@ class ExplorerModel:
         self.model.setHorizontalHeaderLabels(["Name", "Type"])
         self.count = 0
 
-    def AddToModel(self, request_name="", request_type=""):
+    def Add(self, request_name="", request_type=""):
         req_name = QStandardItem(request_name)
         req_type = QStandardItem(request_type)
         req_type.setEditable(False)
         self.model.appendRow([req_name, req_type])
         self.count += 1
 
-    def GetFromModel(self, row, col):
+    def Get(self, row, col):
         return self.model.item(row, col)
 
-    def ClearModel(self):
+    def Clear(self):
         self.model.clear()
         self.model.setHorizontalHeaderLabels(["Name", "Type"])
         self.count = 0
-    
 
 class Getman(QtWidgets.QWidget):
     response_signal = pyqtSignal(object)
@@ -90,7 +89,8 @@ class Getman(QtWidgets.QWidget):
         self.workspace_updated_signal.connect(self.HandleWorkspaceUpdated)
 
         # Request
-        self.pb_add_getman_request.clicked.connect(self.AddRequest)
+        self.pb_create_request.clicked.connect(self.CreateRequest)
+        self.pb_delete_request.clicked.connect(self.DeleteRequest)
         self.pb_send.clicked.connect(self.SendRequest)
         self.cbox_request_type.currentTextChanged.connect(self.ChangeRequestTypesColor)
         self.InitializeRequestTypes()
@@ -118,10 +118,10 @@ class Getman(QtWidgets.QWidget):
             self.cbox_request_type.setItemData(i, font, Qt.FontRole)
 
     def HandleWorkspaceUpdated(self):
-        self.explorer_model.ClearModel()
+        self.explorer_model.Clear()
         for request in self.workspace.requests:
             request_json = self.ReadRequest(self.workspace.GetRequestJsonPath(request))
-            self.explorer_model.AddToModel(request, request_json["request_type"])
+            self.explorer_model.Add(request, request_json["request_type"])
         workspace = self.workspace.name if self.workspace.name != "" else "Untitled"
         title = f"Getman - {workspace}"
         if self.parent is None:
@@ -149,9 +149,9 @@ class Getman(QtWidgets.QWidget):
 
     def GetEmptyRequest(self):
         return {
-            "name": "",
             "url": "",
             "request_type": "GET",
+            "params": {},
             "headers": {},
             "body": {
                 "body_selection": BodySelection.NONE,
@@ -172,7 +172,7 @@ class Getman(QtWidgets.QWidget):
     def SetRequest(self, selected, deselected):
         for selected_index in selected.indexes():
             if selected_index.column() == self.explorer_model.NAME:
-                name = self.explorer_model.GetFromModel(selected_index.row(), selected_index.column()).text()
+                name = self.explorer_model.Get(selected_index.row(), selected_index.column()).text()
                 self.request_json = self.ReadRequest(self.workspace.GetRequestJsonPath(name))
                 self.LoadRequest(self.request_json)
 
@@ -188,16 +188,25 @@ class Getman(QtWidgets.QWidget):
         return request_json
 
     def LoadRequest(self, request_json: dict):
-        self.le_url.setText(request_json["url"])
-        self.cbox_request_type.setCurrentText(request_json["request_type"])
-        self.params_table.SetFields(request_json["params"])
-        self.headers_table.SetFields(request_json["headers"])
-        self.body_selector.LoadState(request_json)
+        # TODO: handle try-except errors
+        try:
+            self.le_url.setText(request_json["url"])
+            self.cbox_request_type.setCurrentText(request_json["request_type"])
+            self.params_table.SetFields(request_json["params"])
+            self.headers_table.SetFields(request_json["headers"])
+            self.body_selector.LoadState(request_json)
+        except:
+            pass
 
-    def AddRequest(self):
+    def CreateRequest(self):
         name, ok = QInputDialog.getText(self, "Request", "Enter name of request:")
         if ok and name != "":
-            print(name)
+            new_request = self.GetEmptyRequest()
+            self.workspace.AddNewRequestInWorkspace(name, new_request)
+            self.workspace.ReloadWorkspace()
+
+    def DeleteRequest(self):
+        print(self.tree_view_explorer.selectedIndexes())
 
     def SendRequest(self):
         url = self.le_url.text()

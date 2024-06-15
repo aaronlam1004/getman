@@ -49,7 +49,7 @@ class Workspace:
         self.UpdateConfig()
         self.LoadWorkspace()
 
-    def SaveWorkspace(self, workspace_name, overwrite=False):
+    def SaveWorkspace(self, workspace_name, overwrite: bool = False):
         if not overwrite:
             for directory in os.listdir(WORKSPACE_PATH):
                 if workspace_name in directory:
@@ -88,7 +88,20 @@ class Workspace:
     def GetRequestJsonPath(self, request_name):
         return os.path.join(self.path, "requests", f"{request_name}.req.json")
 
-    def RefreshWorkspace(self):
+    def AddNewRequestInWorkspace(self, name, request_json, overwrite: bool = False):
+        if name != "":
+            if not overwrite:
+                requests_path = os.path.join(self.path, "requests")
+                curr_requests = [os.path.basename(req_json).split('.')[0] for req_json in glob.glob(f"{requests_path}/*.req.json")]
+                if name in curr_requests:
+                    return False
+            with open(f"{requests_path}/{name}.req.json", 'w') as json_file:
+                json.dump(request_json, json_file)
+            return True
+        return False
+
+
+    def ReloadWorkspace(self):
         self.LoadWorkspace()
 
     def CloseWorkspace(self):

@@ -41,6 +41,9 @@ class ExplorerModel:
     def Get(self, row, col):
         return self.model.item(row, col)
 
+    def RemoveRow(self, row):
+        self.model.removeRow(row)
+
     def Clear(self):
         self.model.clear()
         self.model.setHorizontalHeaderLabels(["Name", "Type"])
@@ -54,7 +57,8 @@ class Getman(QtWidgets.QWidget):
         super(Getman, self).__init__(parent)
         uic.loadUi(GetUiPath(__file__, 'ui/Getman.ui'), self)
         self.parent = parent
-        
+       
+        self.request_name = ""
         self.request_json = self.GetEmptyRequest()
 
         self.response_highlighter = JsonHighlighter(self.te_response_json.document())
@@ -173,6 +177,7 @@ class Getman(QtWidgets.QWidget):
         for selected_index in selected.indexes():
             if selected_index.column() == self.explorer_model.NAME:
                 name = self.explorer_model.Get(selected_index.row(), selected_index.column()).text()
+                self.request_name = name
                 self.request_json = self.ReadRequest(self.workspace.GetRequestJsonPath(name))
                 self.LoadRequest(self.request_json)
 
@@ -199,14 +204,22 @@ class Getman(QtWidgets.QWidget):
             pass
 
     def CreateRequest(self):
+        if self.request_name != "":
+            self.workspace.SaveRequestInWorkspace(self.request_name, self.GetRequest(), overwrite=True)
         name, ok = QInputDialog.getText(self, "Request", "Enter name of request:")
         if ok and name != "":
             new_request = self.GetEmptyRequest()
-            self.workspace.AddNewRequestInWorkspace(name, new_request)
+            self.workspace.SaveRequestInWorkspace(name, new_request)
             self.workspace.ReloadWorkspace()
 
     def DeleteRequest(self):
-        print(self.tree_view_explorer.selectedIndexes())
+        if len(self.tree_view_explorer.selectedIndexes()) > 0:
+            selected_index = self.tree_view_explorer.selectedIndexes()[0]
+            name = self.explorer_model.Get(selected_index.row(), 0).text()
+            delete = QMessageBox.question(self, "Delete request?", "Do you want to delete request?", QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
+            if delete == QMessageBox.Yes:
+                self.explorer_model.RemoveRow(selected_index.row())
+                self.workspace.DeleteRequestFromWorkspace(name)
 
     def SendRequest(self):
         url = self.le_url.text()

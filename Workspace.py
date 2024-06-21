@@ -88,10 +88,10 @@ class Workspace:
     def GetRequestJsonPath(self, request_name):
         return os.path.join(self.path, "requests", f"{request_name}.req.json")
 
-    def AddNewRequestInWorkspace(self, name, request_json, overwrite: bool = False):
+    def SaveRequestInWorkspace(self, name, request_json, overwrite: bool = False):
         if name != "":
+            requests_path = os.path.join(self.path, "requests")
             if not overwrite:
-                requests_path = os.path.join(self.path, "requests")
                 curr_requests = [os.path.basename(req_json).split('.')[0] for req_json in glob.glob(f"{requests_path}/*.req.json")]
                 if name in curr_requests:
                     return False
@@ -100,6 +100,12 @@ class Workspace:
             return True
         return False
 
+    def DeleteRequestFromWorkspace(self, name):
+        if name != "":
+            requests_path = os.path.join(self.path, "requests") 
+            delete_request = os.path.join(requests_path, f"{name}.req.json")
+            if os.path.exists(delete_request):
+                os.remove(delete_request)
 
     def ReloadWorkspace(self):
         self.LoadWorkspace()

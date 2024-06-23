@@ -42,7 +42,7 @@ class Workspace:
         else:
             self.config["workspace"]["name"] = self.name
         with open(CONFIG_FILE, 'w') as config_file:
-            self.config.write(config_file) 
+            self.config.write(config_file)
 
     def SetWorkspace(self, workspace):
         self.name = workspace
@@ -71,21 +71,21 @@ class Workspace:
         self.SetWorkspace(workspace_name)
         self.UpdateConfig()
         return True
- 
+
     def LoadWorkspace(self):
         if self.name == "":
             self.path = ""
         else:
             self.path = os.path.join(WORKSPACE_PATH, self.name)
             if os.path.isdir(self.path):
-                requests_path = os.path.join(self.path, "requests") 
+                requests_path = os.path.join(self.path, "requests")
                 os.makedirs(requests_path, exist_ok=True)
                 self.requests = sorted([os.path.basename(req_json).split('.')[0] for req_json in glob.glob(f"{requests_path}/*.req.json")])
 
         if self.workspace_updated is not None:
             self.workspace_updated.emit()
 
-    def GetRequestJsonPath(self, request_name):
+    def GetWorkspaceRequestPath(self, request_name):
         return os.path.join(self.path, "requests", f"{request_name}.req.json")
 
     def SaveRequestInWorkspace(self, name, request_json, overwrite: bool = False):
@@ -102,7 +102,7 @@ class Workspace:
 
     def DeleteRequestFromWorkspace(self, name):
         if name != "":
-            requests_path = os.path.join(self.path, "requests") 
+            requests_path = os.path.join(self.path, "requests")
             delete_request = os.path.join(requests_path, f"{name}.req.json")
             if os.path.exists(delete_request):
                 os.remove(delete_request)

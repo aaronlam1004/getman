@@ -24,31 +24,6 @@ from RequestHandler import RequestTypes, RequestHandler
 from GetScriptIDE import GetScriptIDE
 from JsonHighlighter import JsonHighlighter
 
-class ExplorerModel:
-    NAME, TYPE = range(2)
-    def __init__(self, parent):
-        self.model = QStandardItemModel(0, 2, parent)
-        self.model.setHorizontalHeaderLabels(["Name", "Type"])
-        self.count = 0
-
-    def Add(self, request_name="", request_type=""):
-        req_name = QStandardItem(request_name)
-        req_type = QStandardItem(request_type)
-        req_type.setEditable(False)
-        self.model.appendRow([req_name, req_type])
-        self.count += 1
-
-    def Get(self, row, col):
-        return self.model.item(row, col)
-
-    def RemoveRow(self, row):
-        self.model.removeRow(row)
-
-    def Clear(self):
-        self.model.clear()
-        self.model.setHorizontalHeaderLabels(["Name", "Type"])
-        self.count = 0
-
 class Getman(QtWidgets.QWidget):
     response_signal = pyqtSignal(object)
     workspace_updated_signal = pyqtSignal()
@@ -57,25 +32,36 @@ class Getman(QtWidgets.QWidget):
         super(Getman, self).__init__(parent)
         uic.loadUi(GetUiPath(__file__, 'ui/Getman.ui'), self)
         self.parent = parent
-       
+
         self.request_name = ""
-        self.request_json = self.GetEmptyRequest()
+        self.request_json = self.EmptyRequest()
 
         self.response_highlighter = JsonHighlighter(self.te_response_json.document())
         self.headers_table = RequestTable()
         self.params_table = RequestTable()
         self.body_selector = BodySelector()
         self.script_ide = GetScriptIDE()
-        self.explorer_model = ExplorerModel(self)
-        self.tree_view_explorer.setModel(self.explorer_model.model)
 
-        self.InitActions()
+        self.SetupGUI()
         self.ConnectActions()
 
-        self.workspace = Workspace(self.workspace_updated_signal) 
+        self.workspace = Workspace(self.workspace_updated_signal)
         self.workspace.Init()
 
-    def InitActions(self):
+    @staticmethod
+    def EmptyRequest():
+        return {
+            "url": "",
+            "request_type": "GET",
+            "params": {},
+            "headers": {},
+            "body": {
+                "body_selection": BodySelection.NONE,
+                "body_data" : {}
+            }
+        }
+
+    def SetupGUI(self):
         self.tabwidget_req_settings.addTab(self.headers_table, "Headers")
         self.tabwidget_req_settings.addTab(self.params_table, "Params")
         self.tabwidget_req_settings.addTab(self.body_selector, "Body")
@@ -88,16 +74,10 @@ class Getman(QtWidgets.QWidget):
         self.cbox_request_type.setStyleSheet("selection-background-color: rgb(0, 0, 0)")
 
     def ConnectActions(self):
-        # Explorer
-        self.tree_view_explorer.selectionModel().selectionChanged.connect(self.SetRequest)
-        self.workspace_updated_signal.connect(self.HandleWorkspaceUpdated)
-
         # Request
-        self.pb_create_request.clicked.connect(self.CreateRequest)
-        self.pb_delete_request.clicked.connect(self.DeleteRequest)
         self.pb_send.clicked.connect(self.SendRequest)
         self.cbox_request_type.currentTextChanged.connect(self.ChangeRequestTypesColor)
-        self.InitializeRequestTypes()
+        self.InitRequestTypes()
 
         # Response
         self.response_signal.connect(self.ProcessResponse)
@@ -112,7 +92,7 @@ class Getman(QtWidgets.QWidget):
         self.cbox_request_type.lineEdit().setFont(font)
         self.cbox_request_type.lineEdit().setStyleSheet(f"color: {color}")
 
-    def InitializeRequestTypes(self):
+    def InitRequestTypes(self):
         for i, (request_type, color) in enumerate(REQUEST_TYPE_COLORS.items()):
             font = QFont()
             font.setBold(True)
@@ -151,18 +131,6 @@ class Getman(QtWidgets.QWidget):
                 if ok and workspace != "":
                     self.workspace.SetWorkspace(workspace)
 
-    def GetEmptyRequest(self):
-        return {
-            "url": "",
-            "request_type": "GET",
-            "params": {},
-            "headers": {},
-            "body": {
-                "body_selection": BodySelection.NONE,
-                "body_data" : {}
-            }
-        }
-    
     def ReadRequest(self, request_file):
         request_json = {}
         if os.path.exists(request_file):
@@ -180,6 +148,7 @@ class Getman(QtWidgets.QWidget):
                 self.request_name = name
                 self.request_json = self.ReadRequest(self.workspace.GetRequestJsonPath(name))
                 self.LoadRequest(self.request_json)
+                break
 
     def GetRequest(self):
         request_json = self.GetEmptyRequest()
@@ -200,17 +169,14 @@ class Getman(QtWidgets.QWidget):
             self.params_table.SetFields(request_json["params"])
             self.headers_table.SetFields(request_json["headers"])
             self.body_selector.LoadState(request_json)
-        except:
+        except KeyError:
             pass
 
-    def CreateRequest(self):
+    def SaveRequest(self):
         if self.request_name != "":
             self.workspace.SaveRequestInWorkspace(self.request_name, self.GetRequest(), overwrite=True)
-        name, ok = QInputDialog.getText(self, "Request", "Enter name of request:")
-        if ok and name != "":
-            new_request = self.GetEmptyRequest()
-            self.workspace.SaveRequestInWorkspace(name, new_request)
-            self.workspace.ReloadWorkspace()
+        else:
+            self.CreateRequest()
 
     def DeleteRequest(self):
         if len(self.tree_view_explorer.selectedIndexes()) > 0:
@@ -252,7 +218,7 @@ class Getman(QtWidgets.QWidget):
         if self.script_ide != None:
             self.script_ide.request_script_signal.emit(request_json)
 
-class GetmanApp(QtWidgets.QMainWindow):   
+class GetmanApp(QtWidgets.QMainWindow):
     def __init__(self):
         super(GetmanApp, self).__init__()
         self.setWindowTitle("Getman")
@@ -301,7 +267,7 @@ class GetmanApp(QtWidgets.QMainWindow):
         file_menu.addAction(exit_action)
 
     def InitializeScriptMenuOptions(self):
-        pass 
+        pass
         # script_menu = self.menu_bar.addMenu("Scripts")
         # open_script_ide_action = QAction("Launch IDE", self)
         # open_script_ide_action.triggered.connect(self.OpenScriptTool)

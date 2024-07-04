@@ -151,3 +151,6 @@ class Getman(QtWidgets.QWidget):
     @pyqtSlot(object)
     def ProcessResponse(self, response: dict):
         self.list_widget_responses.addItem(QListWidgetItem(json.dumps(response)))
+
+if __name__ == '__main__':
+    pass

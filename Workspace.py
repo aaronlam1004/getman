@@ -49,7 +49,7 @@ class Workspace:
         self.UpdateConfig()
         self.LoadWorkspace()
 
-    def SaveWorkspace(self, workspace_name, overwrite: bool = False):
+    def CreateWorkspace(self, workspace_name, overwrite: bool = False):
         if not overwrite:
             for directory in os.listdir(WORKSPACE_PATH):
                 if workspace_name in directory:

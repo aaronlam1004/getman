@@ -1,156 +1,1 @@
-import sys
-import os
-import json
-import signal
-import configparser
-from enum import Enum
-
-FILE_PATH = os.path.dirname(__file__)
-GETSCRIPT_PATH = os.path.join(FILE_PATH, 'getscript')
-sys.path.append(GETSCRIPT_PATH)
-
-from PyQt5 import QtWidgets, QtCore, uic
-from PyQt5.QtWidgets import QMenuBar, QAction, QListWidgetItem, QInputDialog, QMessageBox
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt
-from PyQt5.QtGui import QBrush, QColor, QFont, QStandardItemModel, QStandardItem
-
-from Defines import REQUEST_TYPE_COLORS
-from RequestTable import RequestTable
-from BodySelector import BodySelection, BodySelector
-from Workspace import Workspace, WORKSPACE_PATH
-
-from Utils import GetUiPath
-from RequestHandler import RequestTypes, RequestHandler
-from GetScriptIDE import GetScriptIDE
-from JsonHighlighter import JsonHighlighter
-
-class Getman(QtWidgets.QWidget):
-    response_signal = pyqtSignal(object)
-
-    def __init__(self, parent=None):
-        super(Getman, self).__init__(parent)
-        uic.loadUi(GetUiPath(__file__, 'ui/Getman.ui'), self)
-        self.parent = parent
-
-        self.request_name = ""
-        self.request_json = self.EmptyRequest()
-
-        self.response_highlighter = JsonHighlighter(self.te_response_json.document())
-        self.headers_table = RequestTable()
-        self.params_table = RequestTable()
-        self.body_selector = BodySelector()
-        self.script_ide = GetScriptIDE()
-
-        self.SetupGUI()
-        self.ConnectActions()
-
-    @staticmethod
-    def EmptyRequest():
-        return {
-            "url": "",
-            "request_type": "GET",
-            "params": {},
-            "headers": {},
-            "body": {
-                "body_selection": BodySelection.NONE,
-                "body_data" : {}
-            }
-        }
-
-    def SetupGUI(self):
-        self.tabwidget_req_settings.addTab(self.headers_table, "Headers")
-        self.tabwidget_req_settings.addTab(self.params_table, "Params")
-        self.tabwidget_req_settings.addTab(self.body_selector, "Body")
-
-        self.cbox_request_type.setEditable(True)
-        self.cbox_request_type.lineEdit().setEnabled(False)
-        self.cbox_request_type.lineEdit().setReadOnly(True)
-
-        # TODO: make Qt style sheet
-        self.cbox_request_type.setStyleSheet("selection-background-color: rgb(0, 0, 0)")
-
-    def ConnectActions(self):
-        # Request
-        self.pb_send.clicked.connect(self.SendRequest)
-        self.cbox_request_type.currentTextChanged.connect(self.ChangeRequestTypesColor)
-        self.InitRequestTypes()
-
-        # Response
-        self.response_signal.connect(self.ProcessResponse)
-
-        # History
-        self.list_widget_responses.selectionModel().selectionChanged.connect(self.DisplayResponseJson)
-
-    def ChangeRequestTypesColor(self):
-        color = REQUEST_TYPE_COLORS[self.cbox_request_type.currentData()]
-        font = QFont()
-        font.setBold(True)
-        self.cbox_request_type.lineEdit().setFont(font)
-        self.cbox_request_type.lineEdit().setStyleSheet(f"color: {color}")
-
-    def InitRequestTypes(self):
-        for i, (request_type, color) in enumerate(REQUEST_TYPE_COLORS.items()):
-            font = QFont()
-            font.setBold(True)
-            brush = QBrush(QColor(color))
-            self.cbox_request_type.addItem(request_type.value, userData=request_type)
-            self.cbox_request_type.setItemData(i, brush, Qt.TextColorRole)
-            self.cbox_request_type.setItemData(i, font, Qt.FontRole)
-
-    def GetRequest(self):
-        request_json = self.GetEmptyRequest()
-        request_json["url"] = self.le_url.text()
-        request_json["request_type"] = self.cbox_request_type.currentText()
-        request_json["params"] = self.params_table.GetFields()
-        request_json["headers"] = self.headers_table.GetFields()
-        body_selection, body_data = self.body_selector.GetBodyData(json_string = True)
-        request_json["body"]["body_selection"] = body_selection
-        request_json["body"]["body_data"] = body_data
-        return request_json
-
-    def LoadRequest(self, request_json: dict):
-        # TODO: handle try-except errors
-        try:
-            self.le_url.setText(request_json["url"])
-            self.cbox_request_type.setCurrentText(request_json["request_type"])
-            self.params_table.SetFields(request_json["params"])
-            self.headers_table.SetFields(request_json["headers"])
-            self.body_selector.LoadState(request_json)
-        except KeyError:
-            pass
-
-    def SaveRequest(self):
-        if self.request_name != "":
-            self.workspace.SaveRequestInWorkspace(self.request_name, self.GetRequest(), overwrite=True)
-        else:
-            self.CreateRequest()
-
-    def SendRequest(self):
-        url = self.le_url.text()
-        if url != "":
-            headers = self.headers_table.GetFields()
-            params = self.params_table.GetFields()
-            form = {}
-            body = {}
-            body_selection, body_data = self.body_selector.GetBodyData()
-            if body_selection == BodySelection.FORM:
-                form = body_data
-            if body_selection == BodySelection.JSON:
-                body = body_data
-            request, response_json = RequestHandler.Request(url, self.cbox_request_type.currentData(), params=params, headers=headers, body=body, form=form)
-            self.response_signal.emit(response_json)
-            if self.parent is not None:
-                self.parent.add_request_history_signal.emit(RequestHandler.GetJsonFromRequest(request))
-
-    def DisplayResponseJson(self):
-        response = self.list_widget_responses.currentItem().text()
-        if response is not None:
-            response_json = json.loads(response)
-            self.te_response_json.setText(json.dumps(response_json, indent=4))
-
-    @pyqtSlot(object)
-    def ProcessResponse(self, response: dict):
-        self.list_widget_responses.addItem(QListWidgetItem(json.dumps(response)))
-
-if __name__ == '__main__':
-    pass
+import sysimport osimport jsonimport signalimport configparserfrom enum import EnumFILE_PATH = os.path.dirname(__file__)GETSCRIPT_PATH = os.path.join(FILE_PATH, 'getscript')sys.path.append(GETSCRIPT_PATH)from PyQt5 import QtWidgets, QtCore, uicfrom PyQt5.QtWidgets import QMenuBar, QToolBar, QAction, QListWidgetItem, QInputDialog, QMessageBox, QStylefrom PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QModelIndex, QObjectfrom PyQt5.QtGui import QBrush, QColor, QFont, QStandardItemModel, QStandardItemfrom Defines import REQUEST_TYPE_COLORSfrom RequestTable import RequestTablefrom BodySelector import BodySelection, BodySelectorfrom Workspace import Workspace, WORKSPACE_PATHfrom GetRequester import GetRequesterfrom Utils import GetUiPathfrom RequestHandler import RequestTypes, RequestHandlerfrom GetScriptIDE import GetScriptIDEfrom JsonHighlighter import JsonHighlighterclass ExplorerModel:    NAME, TYPE = range(2)    def __init__(self, parent):        self.model = QStandardItemModel(0, 2, parent)        self.model.setHorizontalHeaderLabels(["Name", "Type"])        self.count = 0    def Add(self, request_name="", request_type=""):        req_name = QStandardItem(request_name)        req_type = QStandardItem(request_type)        req_type.setEditable(False)        self.model.appendRow([req_name, req_type])        self.count += 1    def Get(self, row, col):        return self.model.item(row, col)    def RemoveRow(self, row):        self.model.removeRow(row)    def Clear(self):        self.model.clear()        self.model.setHorizontalHeaderLabels(["Name", "Type"])        self.count = 0class Getman(QtWidgets.QMainWindow):    workspace_updated_signal = pyqtSignal()    add_request_history_signal = pyqtSignal(str)    def __init__(self):        super(Getman, self).__init__()        uic.loadUi(GetUiPath(__file__, 'ui/Getman.ui'), self)        self.setWindowTitle("Getman")        self.opened_requests = {}        self.explorer_model = ExplorerModel(self)        self.tree_view_explorer.setModel(self.explorer_model.model)        self.splitter.setStretchFactor(1, 1)        self.ConnectActions()        self.InitWorkspace()        self.InitMenu()        self.InitToolBar()        self.showMaximized()    def closeEvent(self, event):        save = QMessageBox.question(self, "Save workspace?", "Do you want to save your workspace before exiting?", QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)        close = (save == QMessageBox.Yes) or (save == QMessageBox.No)        if save == QMessageBox.Yes:            pass            # self.getman.SaveWorkspace()        if close:            super(Getman, self).closeEvent(event)        else:            event.ignore()    def ConnectActions(self):        self.tree_view_explorer.selectionModel().selectionChanged.connect(self.OpenGetmanRequest)        self.pb_create_request.clicked.connect(self.CreateGetmanRequest)        self.pb_delete_request.clicked.connect(self.DeleteGetmanRequest)        self.tabwidget_getman.tabCloseRequested.connect(self.CloseGetmanRequest)        self.add_request_history_signal.connect(self.AddRequestToHistory)    def InitWorkspace(self):        self.workspace_updated_signal.connect(self.HandleWorkspaceUpdated)        self.workspace = Workspace(self.workspace_updated_signal)        self.workspace.Init()    def CreateWorkspace(self, create_dialog: bool = False):        if create_dialog or self.workspace.name == "":            name, ok = QInputDialog.getText(self, "Workspace", "Enter name of workspace:")            if ok and name != "":                saved = self.workspace.CreateWorkspace(name, overwrite=False)                if not saved:                    overwrite = QMessageBox.question(self, "Overwrite workspace?", f"Workspace {name} already exists. Would you like to overwrite it?", QMessageBox.Yes | QMessageBox.No)                    if overwrite == QMessageBox.Yes:                        self.workspace.CreateWorkspace(name, overwrite=True)    def OpenWorkspace(self):        if os.path.exists(WORKSPACE_PATH):            workspaces = os.listdir(WORKSPACE_PATH)            if len(workspaces) > 0:                workspace, ok = QInputDialog.getItem(self, "Workspace", "Select workspace:", workspaces, 0, False)                if ok and workspace != "":                    self.workspace.SetWorkspace(workspace)    def HandleWorkspaceUpdated(self):        self.explorer_model.Clear()        for request in self.workspace.requests:            request_json = self.ReadGetmanRequest(self.workspace.GetWorkspaceRequestPath(request))            self.explorer_model.Add(request, request_json["request_type"])        workspace = self.workspace.name if self.workspace.name != "" else "Untitled"        title = f"Getman - {workspace}"        self.setWindowTitle(title)    def CreateGetmanRequest(self):        name, ok = QInputDialog.getText(self, "Request", "Enter name of request:")        if ok and name != "":            new_request = Getman.EmptyRequest()            self.workspace.SaveRequestInWorkspace(name, new_request)            self.workspace.ReloadWorkspace()    def DeleteGetmanRequest(self):        if len(self.tree_view_explorer.selectedIndexes()) > 0:            selected_index = self.tree_view_explorer.selectedIndexes()[ExplorerModel.NAME]            name = self.explorer_model.Get(selected_index.row(), ExplorerModel.NAME).text()            delete = QMessageBox.question(self, "Delete request?", "Do you want to delete request?", QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)            if delete == QMessageBox.Yes:                self.tree_view_explorer.clearSelection()                self.tree_view_explorer.setCurrentIndex(QModelIndex())                self.explorer_model.RemoveRow(selected_index.row())                self.workspace.DeleteRequestFromWorkspace(name)    def OpenGetmanRequest(self, selected, deselected):        if len(selected.indexes()) > 0:            name_idx = selected.indexes()[ExplorerModel.NAME]            request_name = self.explorer_model.Get(name_idx.row(), name_idx.column()).text()            if request_name not in self.opened_requests:                request_path = self.workspace.GetWorkspaceRequestPath(request_name)                request_json = self.ReadGetmanRequest(request_path)                requester = GetRequester(self)                requester.LoadRequest(request_json)                self.tabwidget_getman.addTab(requester, request_name)                self.opened_requests[request_name] = requester    def CloseGetmanRequest(self, index):        print(f"Closing tab {index}")    def ReadGetmanRequest(self, request_file):        request_json = {}        if os.path.exists(request_file):            try:                with open(request_file, 'r') as request:                    request_json = json.loads(request.read())            except Exception as exception:                print(exception)        return request_json    @pyqtSlot(str)    def AddRequestToHistory(self, request_json):        self.list_widget_history.addItem(request_json)        # if self.script_ide != None:        #     self.script_ide.request_script_signal.emit(request_json)    def InitToolBar(self):        self.tool_bar = self.addToolBar("File")        save_pixmap = QStyle.SP_MessageBoxCritical        save_icon = self.style().standardIcon(save_pixmap)        save_action = QAction(save_icon, "Save", self)        self.tool_bar.addAction(save_action)    def InitMenu(self):        self.menu_bar = QMenuBar(self)        self.InitializeFileMenuOptions()        self.InitializeScriptMenuOptions()        self.setMenuBar(self.menu_bar)    def InitializeFileMenuOptions(self):        file_menu = self.menu_bar.addMenu("File")        new_request_action = QAction("New", self)        # new_request_action =        new_workspace_action = QAction("New Workspace", self)        new_workspace_action.triggered.connect(lambda : self.CreateWorkspace(create_dialog=True))        file_menu.addAction(new_workspace_action)        open_action = QAction("Open workspace", self)        # open_action.triggered.connect(self.getman.OpenWorkspace)        file_menu.addAction(open_action)        close_action = QAction("Close workspace", self)        # close_action.triggered.connect(self.getman.workspace.CloseWorkspace)        file_menu.addAction(close_action)        file_menu.addSeparator()        save_action = QAction("Save workspace", self)        # save_action.triggered.connect(lambda : self.getman.SaveWorkspace())        file_menu.addAction(save_action)        save_as_action = QAction("Save workspace as", self)        # save_as_action.triggered.connect(lambda : self.getman.SaveWorkspace(save_dialog=True))        file_menu.addAction(save_as_action)        file_menu.addSeparator()        exit_action = QAction("Exit", self)        exit_action.triggered.connect(self.close)        file_menu.addAction(exit_action)    def InitializeScriptMenuOptions(self):        pass        # script_menu = self.menu_bar.addMenu("Scripts")        # open_script_ide_action = QAction("Launch IDE", self)        # open_script_ide_action.triggered.connect(self.OpenScriptTool)        # script_menu.addAction(open_script_ide_action)    def OpenScriptTool(self):        pass        # self.getman.script_ide.request_script_signal.connect(self.getman.script_ide.AddRequestToScript)        # self.getman.script_ide.show()if __name__ == '__main__':    q_application = QtWidgets.QApplication(sys.argv)    q_application.setStyle("Fusion")    app = Getman()    app.show()    sys.exit(q_application.exec_())

@@ -138,6 +138,7 @@ class GetRequester(QtWidgets.QWidget):
             if body_selection == BodySelection.JSON:
                 body = body_data
             request, response_json = RequestHandler.Request(url, self.cbox_request_type.currentData(), params=params, headers=headers, body=body, form=form)
+            print(request, response_json)
             self.response_signal.emit(response_json)
             if self.parent is not None:
                 self.parent.add_request_history_signal.emit(RequestHandler.GetJsonFromRequest(request))
@@ -151,6 +152,3 @@ class GetRequester(QtWidgets.QWidget):
     @pyqtSlot(object)
     def ProcessResponse(self, response: dict):
         self.list_widget_responses.addItem(QListWidgetItem(json.dumps(response)))
-
-if __name__ == '__main__':
-    pass

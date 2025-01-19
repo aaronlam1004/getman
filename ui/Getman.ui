@@ -53,7 +53,11 @@
             </layout>
            </item>
            <item>
-            <widget class="QTreeView" name="tree_view_explorer"/>
+            <widget class="QTreeWidget" name="tree_widget_explorer">
+             <property name="columnCount">
+              <number>0</number>
+             </property>
+            </widget>
            </item>
           </layout>
          </widget>

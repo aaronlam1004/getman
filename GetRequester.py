@@ -21,25 +21,23 @@ from Workspace import Workspace, WORKSPACE_PATH
 
 from Utils import GetUiPath
 from RequestHandler import RequestTypes, RequestHandler
-from GetScriptIDE import GetScriptIDE
 from JsonHighlighter import JsonHighlighter
 
 class GetRequester(QtWidgets.QWidget):
     response_signal = pyqtSignal(object)
 
-    def __init__(self, parent=None):
+    def __init__(self, request_name: str, parent = None):
         super(GetRequester, self).__init__(parent)
         uic.loadUi(GetUiPath(__file__, 'ui/GetRequester.ui'), self)
         self.parent = parent
 
-        self.request_name = ""
+        self.request_name = request_name
         self.request_json = self.EmptyRequest()
 
         self.response_highlighter = JsonHighlighter(self.te_response_json.document())
         self.headers_table = RequestTable()
         self.params_table = RequestTable()
         self.body_selector = BodySelector()
-        self.script_ide = GetScriptIDE()
 
         self.SetupGUI()
         self.ConnectActions()
@@ -56,6 +54,9 @@ class GetRequester(QtWidgets.QWidget):
                 "body_data" : {}
             }
         }
+
+    def GetName(self):
+        return self.request_name
 
     def SetupGUI(self):
         self.tabwidget_req_settings.addTab(self.headers_table, "Headers")
@@ -98,7 +99,7 @@ class GetRequester(QtWidgets.QWidget):
             self.cbox_request_type.setItemData(i, font, Qt.FontRole)
 
     def GetRequest(self):
-        request_json = self.GetEmptyRequest()
+        request_json = self.EmptyRequest()
         request_json["url"] = self.le_url.text()
         request_json["request_type"] = self.cbox_request_type.currentText()
         request_json["params"] = self.params_table.GetFields()
@@ -121,9 +122,7 @@ class GetRequester(QtWidgets.QWidget):
 
     def SaveRequest(self):
         if self.request_name != "":
-            self.workspace.SaveRequestInWorkspace(self.request_name, self.GetRequest(), overwrite=True)
-        else:
-            self.CreateRequest()
+            self.parent.workspace.SaveRequestInWorkspace(self.request_name, self.GetRequest(), overwrite=True)
 
     def SendRequest(self):
         url = self.le_url.text()

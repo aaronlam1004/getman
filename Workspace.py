@@ -44,12 +44,15 @@ class Workspace:
         with open(CONFIG_FILE, 'w') as config_file:
             self.config.write(config_file)
 
+    def IsLoaded(self):
+        return self.name != "" and self.path != ""
+
     def SetWorkspace(self, workspace):
         self.name = workspace
         self.UpdateConfig()
         self.LoadWorkspace()
 
-    def CreateWorkspace(self, workspace_name, overwrite: bool = False):
+    def CreateWorkspace(self, workspace_name, overwrite: bool = False) -> bool:
         if not overwrite:
             for directory in os.listdir(WORKSPACE_PATH):
                 if workspace_name in directory:

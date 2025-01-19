@@ -12,6 +12,8 @@ WORKSPACE_PATH = os.path.join(FILE_PATH, ".workspaces")
 CONFIG_FILE_NAME = "config.ini"
 CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), CONFIG_FILE_NAME)
 
+TEMP_WORKSPACE = ""
+
 class Workspace:
     def __init__(self, workspace_updated):
         self.workspace_updated = workspace_updated
@@ -34,7 +36,7 @@ class Workspace:
         if "workspace" in self.config and "name" in self.config["workspace"]:
             self.SetWorkspace(self.config["workspace"]["name"])
         else:
-            self.SetWorkspace("")
+            self.SetWorkspace(TEMP_WORKSPACE)
 
     def UpdateConfig(self):
         if "workspace" not in self.config.sections() or "name" not in self.config["workspace"]:
@@ -115,3 +117,4 @@ class Workspace:
 
     def CloseWorkspace(self):
         self.SetWorkspace(TEMP_WORKSPACE)
+        self.ReloadWorkspace()

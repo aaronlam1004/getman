@@ -40,30 +40,27 @@ class Getman(QtWidgets.QMainWindow):
         self.showMaximized()
 
     def closeEvent(self, event):
-        save = QMessageBox.question(self, "Save workspace?", "Do you want to save your workspace before exiting?", QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
-        close = (save == QMessageBox.Yes) or (save == QMessageBox.No)
-        if save == QMessageBox.Yes:
-            self.SaveWorkspace()
-        if close:
+        if self.SaveWorkspace():
             super(Getman, self).closeEvent(event)
         else:
             event.ignore()
 
     def ConnectActions(self):
-        self.tree_widget_explorer.itemClicked.connect(self.OpenGetmanRequest)
-        self.pb_create_request.clicked.connect(self.CreateGetmanRequest)
-        self.pb_delete_request.clicked.connect(self.DeleteGetmanRequest)
-        self.tabwidget_getman.tabCloseRequested.connect(self.CloseGetmanRequest)
+        self.tree_widget_explorer.itemClicked.connect(self.OpenRequest)
+        self.pb_create_request.clicked.connect(self.CreateRequest)
+        self.pb_delete_request.clicked.connect(self.DeleteRequest)
+        self.tabwidget_getman.tabCloseRequested.connect(self.CloseRequest)
         self.add_request_history_signal.connect(self.AddRequestToHistory)
 
+    # -- Workspace --
     def InitWorkspace(self):
         self.workspace_updated_signal.connect(self.UpdateWorkspace)
         self.workspace = Workspace(self.workspace_updated_signal)
         self.workspace.Init()
 
-    def CreateWorkspace(self, create_dialog: bool = False):
+    def CreateWorkspace(self, prompt: bool = False):
         saved = False
-        if create_dialog or self.workspace.name == "":
+        if prompt or self.workspace.name == "":
             name, ok = QInputDialog.getText(self, "Workspace", "Enter name of workspace:")
             if ok and name != "":
                 saved = self.workspace.CreateWorkspace(name, overwrite=False)
@@ -82,13 +79,29 @@ class Getman(QtWidgets.QMainWindow):
                     self.workspace.SetWorkspace(workspace)
 
     def SaveWorkspace(self):
-        for requester, _ in self.opened_requests:
+        close = True
+        save = QMessageBox.question(self, "Save workspace?", "Do you want to save your workspace before exiting?", QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
+        if save == QMessageBox.Yes:
+            self.SaveWorkspaceRequests()
+        elif save == QMessageBox.Cancel:
+            close = False
+        return close
+
+    def SaveWorkspaceRequests(self):
+        for requester in self.opened_requests:
             requester.SaveRequest()
+
+    def CloseWorkspace(self):
+        if self.SaveWorkspace(): 
+            self.workspace.CloseWorkspace()
+            self.tree_widget_explorer.clear()
+            for _ in range(self.tabwidget_getman.count()):
+                self.tabwidget_getman.removeTab(0)
 
     def UpdateWorkspace(self):
         self.tree_widget_explorer.clear()
         for request in self.workspace.requests:
-            request_json = self.ReadGetmanRequest(self.workspace.GetWorkspaceRequestPath(request))
+            request_json = self.ReadRequest(self.workspace.GetWorkspaceRequestPath(request))
             tree_widget_item = QTreeWidgetItem(self.tree_widget_explorer)
             tree_widget_item.setText(0, request)
             self.tree_widget_explorer.insertTopLevelItem(self.tree_widget_explorer.columnCount(), tree_widget_item)
@@ -96,42 +109,60 @@ class Getman(QtWidgets.QMainWindow):
         title = f"Getman - {workspace}"
         self.setWindowTitle(title)
 
-    def CreateGetmanRequest(self):
+    # -- Request(s) --
+    def CreateRequest(self):
         name, ok = QInputDialog.getText(self, "Request", "Enter name of request:")
         if ok and name != "":
-            if self.workspace.IsLoaded() or self.CreateWorkspace(create_dialog=True):
+            if self.workspace.IsLoaded() or self.CreateWorkspace(prompt=True):
                 new_request = GetRequester.EmptyRequest()
                 self.workspace.SaveRequestInWorkspace(name, new_request)
                 self.workspace.ReloadWorkspace()
 
-    def DeleteGetmanRequest(self):
+    def DeleteRequest(self):
         selected_items = self.tree_widget_explorer.selectedItems()
         if len(selected_items) == 1:
             item = selected_items[0]
-            name = item.text(0)
+            request_name = item.text(0)
             delete = QMessageBox.question(self, "Delete request?", "Do you want to delete request?", QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
             if delete == QMessageBox.Yes:
                 self.tree_widget_explorer.clearSelection()
                 self.tree_widget_explorer.takeTopLevelItem(self.tree_widget_explorer.indexOfTopLevelItem(item))
-                self.workspace.DeleteRequestFromWorkspace(name)
-                # TODO: close if current index
+                self.workspace.DeleteRequestFromWorkspace(request_name)
+                index = self.FindOpenRequest(request_name)
+                if index != -1:
+                    self.CloseRequest(index, prompt=False)
 
-    def OpenGetmanRequest(self, item, column):
+    def OpenRequest(self, item, column):
         request_name = item.text(0)
-        request_names = [request_name for _, request_name in self.opened_requests]
-        if request_name not in request_names:
+        index = self.FindOpenRequest(request_name)
+        if index == -1:
             request_path = self.workspace.GetWorkspaceRequestPath(request_name)
-            request_json = self.ReadGetmanRequest(request_path)
+            request_json = self.ReadRequest(request_path)
             requester = GetRequester(request_name, self)
             requester.LoadRequest(request_json)
             self.tabwidget_getman.addTab(requester, request_name)
-            self.opened_requests.append((requester, request_name))
+            self.tabwidget_getman.setCurrentIndex(self.tabwidget_getman.count() - 1)
+            self.opened_requests.append(requester)
+        else:
+            self.tabwidget_getman.setCurrentIndex(index)
+        self.tree_widget_explorer.clearSelection()
 
-    def CloseGetmanRequest(self, index):
-        self.tabwidget_getman.removeTab(index)
-        self.opened_requests.pop(index)
+    def FindOpenRequest(self, request_name):
+        for index, requester in enumerate(self.opened_requests):
+            if requester.GetName() == request_name:
+                return index
+        return -1
 
-    def ReadGetmanRequest(self, request_file):
+    def SaveRequest(self, requester):
+        close = True
+        save = QMessageBox.question(self, "Save request?", "Do you want to save request?", QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
+        if save == QMessageBox.Yes:
+            requester.SaveRequest()
+        elif save == QMessageBox.Cancel:
+            close = False
+        return close
+            
+    def ReadRequest(self, request_file):
         request_json = {}
         if os.path.exists(request_file):
             try:
@@ -140,6 +171,15 @@ class Getman(QtWidgets.QMainWindow):
             except Exception as exception:
                 print(exception)
         return request_json
+
+    def CloseRequest(self, index, prompt = True):
+        requester = self.opened_requests[index]
+        if not prompt:
+            self.tabwidget_getman.removeTab(index)
+            self.opened_requests.pop(index) 
+        elif self.SaveRequest(requester):
+            self.tabwidget_getman.removeTab(index)
+            self.opened_requests.pop(index) 
 
     @pyqtSlot(object)
     def ProcessResponse(self, response: dict):
@@ -151,14 +191,14 @@ class Getman(QtWidgets.QMainWindow):
 
     def InitMenu(self):
         self.menu_bar = QMenuBar(self)
-        self.InitializeFileMenuOptions()
+        self.InitFileMenuOptions()
         self.setMenuBar(self.menu_bar)
 
-    def InitializeFileMenuOptions(self):
+    def InitFileMenuOptions(self):
         file_menu = self.menu_bar.addMenu("File")
 
         new_workspace_action = QAction("New Workspace", self)
-        new_workspace_action.triggered.connect(lambda : self.CreateWorkspace(create_dialog=True))
+        new_workspace_action.triggered.connect(lambda : self.CreateWorkspace(prompt=True))
         file_menu.addAction(new_workspace_action)
 
         open_action = QAction("Open workspace", self)
@@ -166,13 +206,13 @@ class Getman(QtWidgets.QMainWindow):
         file_menu.addAction(open_action)
 
         close_action = QAction("Close workspace", self)
-        # close_action.triggered.connect(self.getman.workspace.CloseWorkspace)
+        close_action.triggered.connect(self.CloseWorkspace)
         file_menu.addAction(close_action)
 
         file_menu.addSeparator()
 
         save_action = QAction("Save workspace", self)
-        # save_action.triggered.connect(lambda : self.getman.SaveWorkspace())
+        save_action.triggered.connect(self.SaveWorkspaceRequests)
         file_menu.addAction(save_action)
 
         save_as_action = QAction("Save workspace as", self)

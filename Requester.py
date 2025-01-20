@@ -19,9 +19,9 @@ from RequestTable import RequestTable
 from BodySelector import BodySelection, BodySelector
 from Workspace import Workspace, WORKSPACE_PATH
 
-from Utils import GetUiPath
 from RequestHandler import RequestTypes, RequestHandler
 from JsonHighlighter import JsonHighlighter
+from utils.Paths import GetUIPath
 
 class Requester(QtWidgets.QWidget):
     response_signal = pyqtSignal(object)
@@ -29,7 +29,7 @@ class Requester(QtWidgets.QWidget):
 
     def __init__(self, request_name: str, parent = None):
         super(Requester, self).__init__(parent)
-        uic.loadUi(GetUiPath(__file__, 'ui/Requester.ui'), self)
+        uic.loadUi(GetUIPath('Requester.ui'), self)
         self.parent = parent
 
         self.request_name = request_name

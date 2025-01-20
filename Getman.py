@@ -17,10 +17,10 @@ from BodySelector import BodySelection, BodySelector
 from Workspace import Workspace, WORKSPACE_PATH
 from Requester import Requester
 
-from Utils import GetUiPath
 from Dialogs import YesNoDialog, YesNoCancelDialog, SelectWorkspaceDialog 
 from RequestHandler import RequestTypes, RequestHandler
 from JsonHighlighter import JsonHighlighter
+from utils.Paths import GetUIPath
 
 class Getman(QtWidgets.QMainWindow):
     workspace_updated_signal = pyqtSignal()
@@ -28,7 +28,7 @@ class Getman(QtWidgets.QMainWindow):
 
     def __init__(self):
         super(Getman, self).__init__()
-        uic.loadUi(GetUiPath(__file__, 'ui/Getman.ui'), self)
+        uic.loadUi(GetUIPath('Getman.ui'), self)
         self.setWindowTitle("Getman")
         self.opened_requests = []
         self.SetupActions()

@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import QTableWidgetItem
 from BodyEditor import BodyEditor
 from RequestTable import RequestTable
 
-from Utils import GetUiPath
+from utils.Paths import GetUIPath
 
 class BodySelection(IntEnum):
     NONE = 0
@@ -19,7 +19,7 @@ class BodySelection(IntEnum):
 class BodySelector(QtWidgets.QWidget):
     def __init__(self, parent = None):
         super(BodySelector, self).__init__(parent)
-        uic.loadUi(GetUiPath(__file__, 'ui/BodySelector.ui'), self)
+        uic.loadUi(GetUIPath('BodySelector.ui'), self)
 
         self.body_selection_radio_buttons = {
             BodySelection.NONE: self.radio_None,

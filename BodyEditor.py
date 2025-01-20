@@ -4,12 +4,12 @@ import json
 
 from PyQt5 import QtWidgets, QtCore, uic
 
-from Utils import GetUiPath
+from utils.Paths import GetUIPath
 
 class BodyEditor(QtWidgets.QWidget):
     def __init__(self, parent = None):
         super(BodyEditor, self).__init__(parent)
-        uic.loadUi(GetUiPath(__file__, 'ui/BodyEditor.ui'), self)
+        uic.loadUi(GetUIPath('BodyEditor.ui'), self)
         self.ConnectActions()
 
     def ConnectActions(self):

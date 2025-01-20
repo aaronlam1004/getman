@@ -25,7 +25,7 @@ from JsonHighlighter import JsonHighlighter
 
 class Requester(QtWidgets.QWidget):
     response_signal = pyqtSignal(object)
-    request_type_updated_signal = pyqtSignal(str)
+    request_type_updated_signal = pyqtSignal(str, str)
 
     def __init__(self, request_name: str, parent = None):
         super(Requester, self).__init__(parent)
@@ -74,7 +74,7 @@ class Requester(QtWidgets.QWidget):
     def ConnectActions(self):
         # Request
         self.pb_Send.clicked.connect(self.SendRequest)
-        self.cbox_RequestTypes.currentTextChanged.connect(self.ChangeRequestTypesColor)
+        self.cbox_RequestTypes.currentTextChanged.connect(self.UpdateRequestType)
         self.InitRequestTypes()
 
         # Response
@@ -83,8 +83,10 @@ class Requester(QtWidgets.QWidget):
         # History
         self.list_Responses.selectionModel().selectionChanged.connect(self.DisplayResponseJson)
 
-    def ChangeRequestTypesColor(self):
-        color = REQUEST_TYPE_COLORS[self.cbox_RequestTypes.currentData()]
+    def UpdateRequestType(self):
+        request_type = self.cbox_RequestTypes.currentData()
+        self.request_type_updated_signal.emit(self.request_name, request_type.value)
+        color = REQUEST_TYPE_COLORS[request_type]
         font = QFont()
         font.setBold(True)
         self.cbox_RequestTypes.lineEdit().setFont(font)

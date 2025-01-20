@@ -204,7 +204,7 @@ class Getman(QtWidgets.QMainWindow):
     def InitFileMenuOptions(self) -> None:
         file_menu = self.menu_bar.addMenu("File")
 
-        new_workspace_action = QAction("New Workspace", self)
+        new_workspace_action = QAction("New workspace", self)
         new_workspace_action.triggered.connect(lambda : self.CreateWorkspace(prompt=True))
         file_menu.addAction(new_workspace_action)
 

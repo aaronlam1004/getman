@@ -23,12 +23,12 @@ from Utils import GetUiPath
 from RequestHandler import RequestTypes, RequestHandler
 from JsonHighlighter import JsonHighlighter
 
-class GetRequester(QtWidgets.QWidget):
+class Requester(QtWidgets.QWidget):
     response_signal = pyqtSignal(object)
 
     def __init__(self, request_name: str, parent = None):
-        super(GetRequester, self).__init__(parent)
-        uic.loadUi(GetUiPath(__file__, 'ui/GetRequester.ui'), self)
+        super(Requester, self).__init__(parent)
+        uic.loadUi(GetUiPath(__file__, 'ui/Requester.ui'), self)
         self.parent = parent
 
         self.request_name = request_name
@@ -137,7 +137,6 @@ class GetRequester(QtWidgets.QWidget):
             if body_selection == BodySelection.JSON:
                 body = body_data
             request, response_json = RequestHandler.Request(url, self.cbox_request_type.currentData(), params=params, headers=headers, body=body, form=form)
-            print(request, response_json)
             self.response_signal.emit(response_json)
             if self.parent is not None:
                 self.parent.add_request_history_signal.emit(RequestHandler.GetJsonFromRequest(request))

@@ -35,19 +35,19 @@
           </property>
           <widget class="QGroupBox" name="groupBox_3">
            <property name="title">
-            <string/>
+            <string>Request</string>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_2">
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout">
               <item>
-               <widget class="QComboBox" name="cbox_request_type"/>
+               <widget class="QComboBox" name="cbox_RequestTypes"/>
               </item>
               <item>
-               <widget class="QLineEdit" name="le_url"/>
+               <widget class="QLineEdit" name="le_URL"/>
               </item>
               <item>
-               <widget class="QPushButton" name="pb_send">
+               <widget class="QPushButton" name="pb_Send">
                 <property name="text">
                  <string>Send</string>
                 </property>
@@ -60,7 +60,7 @@
               <property name="orientation">
                <enum>Qt::Vertical</enum>
               </property>
-              <widget class="QTabWidget" name="tabwidget_req_settings">
+              <widget class="QTabWidget" name="tabs_RequestSettings">
                <property name="currentIndex">
                 <number>-1</number>
                </property>
@@ -75,8 +75,8 @@
                   <property name="orientation">
                    <enum>Qt::Horizontal</enum>
                   </property>
-                  <widget class="QListWidget" name="list_widget_responses"/>
-                  <widget class="QTextEdit" name="te_response_json">
+                  <widget class="QListWidget" name="list_Responses"/>
+                  <widget class="QTextEdit" name="te_ResponseJsons">
                    <property name="readOnly">
                     <bool>true</bool>
                    </property>

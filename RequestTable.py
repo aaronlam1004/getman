@@ -22,47 +22,47 @@ class RequestTable(QtWidgets.QWidget):
 
     def ConnectActions(self):
         self.InitTable()
-        self.tablewidget_req_options.itemChanged.connect(self.CheckChange)
+        self.table_RequestOptions.itemChanged.connect(self.CheckChange)
 
     def InitTable(self):
-        self.tablewidget_req_options.setColumnCount(3)
-        self.tablewidget_req_options.setRowCount(1)
-        self.tablewidget_req_options.verticalHeader().setVisible(False)
-        self.tablewidget_req_options.horizontalHeader().setStretchLastSection(True)
-        self.tablewidget_req_options.setHorizontalHeaderLabels(TABLE_HEADER_LABELS.keys())
+        self.table_RequestOptions.setColumnCount(3)
+        self.table_RequestOptions.setRowCount(1)
+        self.table_RequestOptions.verticalHeader().setVisible(False)
+        self.table_RequestOptions.horizontalHeader().setStretchLastSection(True)
+        self.table_RequestOptions.setHorizontalHeaderLabels(TABLE_HEADER_LABELS.keys())
 
     def GetRowCount(self):
-        return self.tablewidget_req_options.rowCount()
+        return self.table_RequestOptions.rowCount()
 
     def AddNewRow(self):
-        self.tablewidget_req_options.insertRow(self.GetRowCount())
+        self.table_RequestOptions.insertRow(self.GetRowCount())
 
     def CheckChange(self, item):
         for row in range(self.GetRowCount()):
-            key_item = self.tablewidget_req_options.item(row, TABLE_HEADER_LABELS["Key"])
-            value_item = self.tablewidget_req_options.item(row, TABLE_HEADER_LABELS["Value"])
-            desc_item = self.tablewidget_req_options.item(row, TABLE_HEADER_LABELS["Description"])
+            key_item = self.table_RequestOptions.item(row, TABLE_HEADER_LABELS["Key"])
+            value_item = self.table_RequestOptions.item(row, TABLE_HEADER_LABELS["Value"])
+            desc_item = self.table_RequestOptions.item(row, TABLE_HEADER_LABELS["Description"])
             if key_item is not None and key_item.text() != "" or \
                 value_item is not None and value_item.text() != "" or \
                 desc_item is not None and desc_item.text() != "":
                 if row == self.GetRowCount() - 1:
                     self.AddNewRow()
             elif self.GetRowCount() > 1 and row < self.GetRowCount() - 1:
-                    self.tablewidget_req_options.removeRow(row)
+                    self.table_RequestOptions.removeRow(row)
 
     def GetFields(self):
         request_fields = {}
         for row in range(self.GetRowCount()):
-            key_item = self.tablewidget_req_options.item(row, TABLE_HEADER_LABELS["Key"])
-            value_item = self.tablewidget_req_options.item(row, TABLE_HEADER_LABELS["Value"])
+            key_item = self.table_RequestOptions.item(row, TABLE_HEADER_LABELS["Key"])
+            value_item = self.table_RequestOptions.item(row, TABLE_HEADER_LABELS["Value"])
             if key_item is not None:
                 request_fields[key_item.text()] = value_item.text() if value_item is not None else ""
         return request_fields
 
     def SetFields(self, request_fields):
         if len(request_fields) == 0:
-            self.tablewidget_req_options.clearContents()
+            self.table_RequestOptions.clearContents()
         for i, (k, v) in enumerate(request_fields.items()):
             self.AddNewRow()
-            self.tablewidget_req_options.setItem(i, 0, QTableWidgetItem(k))
-            self.tablewidget_req_options.setItem(i, 1, QTableWidgetItem(v))
+            self.table_RequestOptions.setItem(i, 0, QTableWidgetItem(k))
+            self.table_RequestOptions.setItem(i, 1, QTableWidgetItem(v))

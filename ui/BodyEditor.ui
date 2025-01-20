@@ -15,7 +15,7 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QTextEdit" name="te_body"/>
+    <widget class="QTextEdit" name="te_Body"/>
    </item>
   </layout>
  </widget>

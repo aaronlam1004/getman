@@ -91,7 +91,7 @@ class Getman(QtWidgets.QMainWindow):
 
     def SaveWorkspaceRequests(self) -> None:
         for requester in self.opened_requests:
-            requester.SaveRequester()
+            requester.SaveRequest()
 
     def CloseWorkspace(self) -> None:
         if self.SaveWorkspace(): 
@@ -106,6 +106,7 @@ class Getman(QtWidgets.QMainWindow):
             request_json = self.ReadRequester(self.workspace.GetWorkspaceRequestPath(request))
             tree_widget_item = QTreeWidgetItem(self.tree_Explorer)
             tree_widget_item.setText(0, request)
+            tree_widget_item.setText(1, request_json["type"])
             self.tree_Explorer.insertTopLevelItem(self.tree_Explorer.columnCount(), tree_widget_item)
         workspace = self.workspace.name if self.workspace.name != "" else "Untitled"
         title = f"Getman - {workspace}"
@@ -147,7 +148,6 @@ class Getman(QtWidgets.QMainWindow):
             self.opened_requests.append(requester)
         else:
             self.tabs_GetRequests.setCurrentIndex(index)
-        self.tree_Explorer.clearSelection()
 
     def FindOpenRequester(self, request_name: str) -> int:
         for index, requester in enumerate(self.opened_requests):
@@ -159,7 +159,7 @@ class Getman(QtWidgets.QMainWindow):
         close = True
         save = QMessageBox.question(self, "Save request?", "Do you want to save request?", QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
         if save == QMessageBox.Yes:
-            requester.SaveRequester()
+            requester.SaveRequest()
         elif save == QMessageBox.Cancel:
             close = False
         return close
@@ -182,11 +182,19 @@ class Getman(QtWidgets.QMainWindow):
         elif self.SaveRequester(requester):
             self.tabs_GetRequests.removeTab(index)
             self.opened_requests.pop(index) 
+        self.tree_Explorer.clearSelection()
 
+    # -- Signals --
     @pyqtSlot(str)
     def AddRequestToHistory(self, request_json: Dict[str, Any]) -> None:
         self.list_RequestHistory.addItem(request_json)
 
+    @pyqtSlot(str)
+    def UpdateRequestTypeInExplorer(self, request_type: str):
+        print(request_type)
+        pass
+
+    # -- Menu --
     def InitMenu(self) -> None:
         self.menu_bar = QMenuBar(self)
         self.InitFileMenuOptions()

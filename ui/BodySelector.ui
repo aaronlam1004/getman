@@ -22,7 +22,7 @@
         <enum>QLayout::SetDefaultConstraint</enum>
        </property>
        <item>
-        <widget class="QRadioButton" name="rb_none">
+        <widget class="QRadioButton" name="radio_None">
          <property name="text">
           <string>None</string>
          </property>
@@ -32,14 +32,14 @@
         </widget>
        </item>
        <item>
-        <widget class="QRadioButton" name="rb_form">
+        <widget class="QRadioButton" name="radio_Form">
          <property name="text">
           <string>Form Data</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QRadioButton" name="rb_json">
+        <widget class="QRadioButton" name="radio_Json">
          <property name="text">
           <string>JSON</string>
          </property>
@@ -63,7 +63,7 @@
     </layout>
    </item>
    <item>
-    <widget class="QStackedWidget" name="sw_body_selection">
+    <widget class="QStackedWidget" name="stacked_Body">
      <widget class="QWidget" name="widget_empty"/>
     </widget>
    </item>

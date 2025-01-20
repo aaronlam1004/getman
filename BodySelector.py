@@ -22,9 +22,9 @@ class BodySelector(QtWidgets.QWidget):
         uic.loadUi(GetUiPath(__file__, 'ui/BodySelector.ui'), self)
 
         self.body_selection_radio_buttons = {
-            BodySelection.NONE: self.rb_none,
-            BodySelection.FORM: self.rb_form,
-            BodySelection.JSON: self.rb_json
+            BodySelection.NONE: self.radio_None,
+            BodySelection.FORM: self.radio_Form,
+            BodySelection.JSON: self.radio_Json
         }
 
         self.ConnectActions()
@@ -39,30 +39,30 @@ class BodySelector(QtWidgets.QWidget):
 
     def UpdateBodySelections(self):
         if self.body_selection_radio_buttons[BodySelection.NONE].isChecked():
-            self.sw_body_selection.setCurrentIndex(BodySelection.NONE)
+            self.stacked_Body.setCurrentIndex(BodySelection.NONE)
         elif self.body_selection_radio_buttons[BodySelection.FORM].isChecked():
-            self.sw_body_selection.setCurrentIndex(BodySelection.FORM)
+            self.stacked_Body.setCurrentIndex(BodySelection.FORM)
         elif self.body_selection_radio_buttons[BodySelection.JSON].isChecked():
-            self.sw_body_selection.setCurrentIndex(BodySelection.JSON)
+            self.stacked_Body.setCurrentIndex(BodySelection.JSON)
 
     def ConnectActions(self):
-        self.sw_body_selection.addWidget(RequestTable()) # 1
-        self.sw_body_selection.addWidget(BodyEditor()) # 2
+        self.stacked_Body.addWidget(RequestTable()) # 1
+        self.stacked_Body.addWidget(BodyEditor()) # 2
         for radio_button in self.body_selection_radio_buttons.values():
             radio_button.clicked.connect(self.UpdateBodySelections)
 
     def GetBodyData(self, json_string = False):
         body_data = (BodySelection.NONE, {})
         if self.body_selection_radio_buttons[BodySelection.FORM].isChecked():
-            body = self.sw_body_selection.currentWidget().GetRequestFields()
+            body = self.stacked_Body.currentWidget().GetRequestFields()
             body_data = (BodySelection.FORM, body)
         elif self.body_selection_radio_buttons[BodySelection.JSON].isChecked():
-            body = self.sw_body_selection.currentWidget().GetBody() if not json_string else self.sw_body_selection.currentWidget().GetBodyText()
+            body = self.stacked_Body.currentWidget().GetBody() if not json_string else self.stacked_Body.currentWidget().GetBodyText()
             body_data = (BodySelection.JSON, body)
         return body_data
 
     def SetBodyData(self, body_selection, body_data):
         if body_selection == BodySelection.FORM:
-            self.sw_body_selection.currentWidget().SetRequestFields(body_data)
+            self.stacked_Body.currentWidget().SetRequestFields(body_data)
         elif body_selection == BodySelection.JSON:
-            self.sw_body_selection.currentWidget().SetBodyText(body_data)
+            self.stacked_Body.currentWidget().SetBodyText(body_data)

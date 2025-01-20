@@ -25,6 +25,7 @@ from JsonHighlighter import JsonHighlighter
 
 class Requester(QtWidgets.QWidget):
     response_signal = pyqtSignal(object)
+    request_type_updated_signal = pyqtSignal(str)
 
     def __init__(self, request_name: str, parent = None):
         super(Requester, self).__init__(parent)
@@ -34,19 +35,19 @@ class Requester(QtWidgets.QWidget):
         self.request_name = request_name
         self.request_json = self.EmptyRequest()
 
-        self.response_highlighter = JsonHighlighter(self.te_response_json.document())
+        self.response_highlighter = JsonHighlighter(self.te_ResponseJsons.document())
         self.headers_table = RequestTable()
         self.params_table = RequestTable()
         self.body_selector = BodySelector()
 
-        self.SetupGUI()
+        self.SetupActions()
         self.ConnectActions()
 
     @staticmethod
     def EmptyRequest():
         return {
             "url": "",
-            "request_type": "GET",
+            "type": "GET",
             "params": {},
             "headers": {},
             "body": {
@@ -58,50 +59,50 @@ class Requester(QtWidgets.QWidget):
     def GetName(self):
         return self.request_name
 
-    def SetupGUI(self):
-        self.tabwidget_req_settings.addTab(self.headers_table, "Headers")
-        self.tabwidget_req_settings.addTab(self.params_table, "Params")
-        self.tabwidget_req_settings.addTab(self.body_selector, "Body")
+    def SetupActions(self):
+        self.tabs_RequestSettings.addTab(self.headers_table, "Headers")
+        self.tabs_RequestSettings.addTab(self.params_table, "Params")
+        self.tabs_RequestSettings.addTab(self.body_selector, "Body")
 
-        self.cbox_request_type.setEditable(True)
-        self.cbox_request_type.lineEdit().setEnabled(False)
-        self.cbox_request_type.lineEdit().setReadOnly(True)
+        self.cbox_RequestTypes.setEditable(True)
+        self.cbox_RequestTypes.lineEdit().setEnabled(False)
+        self.cbox_RequestTypes.lineEdit().setReadOnly(True)
 
         # TODO: make Qt style sheet
-        self.cbox_request_type.setStyleSheet("selection-background-color: rgb(0, 0, 0)")
+        self.cbox_RequestTypes.setStyleSheet("selection-background-color: rgb(0, 0, 0)")
 
     def ConnectActions(self):
         # Request
-        self.pb_send.clicked.connect(self.SendRequest)
-        self.cbox_request_type.currentTextChanged.connect(self.ChangeRequestTypesColor)
+        self.pb_Send.clicked.connect(self.SendRequest)
+        self.cbox_RequestTypes.currentTextChanged.connect(self.ChangeRequestTypesColor)
         self.InitRequestTypes()
 
         # Response
         self.response_signal.connect(self.ProcessResponse)
 
         # History
-        self.list_widget_responses.selectionModel().selectionChanged.connect(self.DisplayResponseJson)
+        self.list_Responses.selectionModel().selectionChanged.connect(self.DisplayResponseJson)
 
     def ChangeRequestTypesColor(self):
-        color = REQUEST_TYPE_COLORS[self.cbox_request_type.currentData()]
+        color = REQUEST_TYPE_COLORS[self.cbox_RequestTypes.currentData()]
         font = QFont()
         font.setBold(True)
-        self.cbox_request_type.lineEdit().setFont(font)
-        self.cbox_request_type.lineEdit().setStyleSheet(f"color: {color}")
+        self.cbox_RequestTypes.lineEdit().setFont(font)
+        self.cbox_RequestTypes.lineEdit().setStyleSheet(f"color: {color}")
 
     def InitRequestTypes(self):
         for i, (request_type, color) in enumerate(REQUEST_TYPE_COLORS.items()):
             font = QFont()
             font.setBold(True)
             brush = QBrush(QColor(color))
-            self.cbox_request_type.addItem(request_type.value, userData=request_type)
-            self.cbox_request_type.setItemData(i, brush, Qt.TextColorRole)
-            self.cbox_request_type.setItemData(i, font, Qt.FontRole)
+            self.cbox_RequestTypes.addItem(request_type.value, userData=request_type)
+            self.cbox_RequestTypes.setItemData(i, brush, Qt.TextColorRole)
+            self.cbox_RequestTypes.setItemData(i, font, Qt.FontRole)
 
     def GetRequest(self):
         request_json = self.EmptyRequest()
-        request_json["url"] = self.le_url.text()
-        request_json["request_type"] = self.cbox_request_type.currentText()
+        request_json["url"] = self.le_URL.text()
+        request_json["type"] = self.cbox_RequestTypes.currentText()
         request_json["params"] = self.params_table.GetFields()
         request_json["headers"] = self.headers_table.GetFields()
         body_selection, body_data = self.body_selector.GetBodyData(json_string = True)
@@ -112,8 +113,8 @@ class Requester(QtWidgets.QWidget):
     def LoadRequest(self, request_json: dict):
         # TODO: handle try-except errors
         try:
-            self.le_url.setText(request_json["url"])
-            self.cbox_request_type.setCurrentText(request_json["request_type"])
+            self.le_URL.setText(request_json["url"])
+            self.cbox_RequestTypes.setCurrentText(request_json["type"])
             self.params_table.SetFields(request_json["params"])
             self.headers_table.SetFields(request_json["headers"])
             self.body_selector.LoadState(request_json)
@@ -125,7 +126,7 @@ class Requester(QtWidgets.QWidget):
             self.parent.workspace.SaveRequestInWorkspace(self.request_name, self.GetRequest(), overwrite=True)
 
     def SendRequest(self):
-        url = self.le_url.text()
+        url = self.le_URL.text()
         if url != "":
             headers = self.headers_table.GetFields()
             params = self.params_table.GetFields()
@@ -136,17 +137,17 @@ class Requester(QtWidgets.QWidget):
                 form = body_data
             if body_selection == BodySelection.JSON:
                 body = body_data
-            request, response_json = RequestHandler.Request(url, self.cbox_request_type.currentData(), params=params, headers=headers, body=body, form=form)
+            request, response_json = RequestHandler.Request(url, self.cbox_RequestTypes.currentData(), params=params, headers=headers, body=body, form=form)
             self.response_signal.emit(response_json)
             if self.parent is not None:
                 self.parent.add_request_history_signal.emit(RequestHandler.GetJsonFromRequest(request))
 
     def DisplayResponseJson(self):
-        response = self.list_widget_responses.currentItem().text()
+        response = self.list_Responses.currentItem().text()
         if response is not None:
             response_json = json.loads(response)
-            self.te_response_json.setText(json.dumps(response_json, indent=4))
+            self.te_ResponseJsons.setText(json.dumps(response_json, indent=4))
 
     @pyqtSlot(object)
     def ProcessResponse(self, response: dict):
-        self.list_widget_responses.addItem(QListWidgetItem(json.dumps(response)))
+        self.list_Responses.addItem(QListWidgetItem(json.dumps(response)))

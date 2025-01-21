@@ -1,4 +1,4 @@
-from RequestHandler import RequestTypes, RequestHandler
+from utils.RequestHandler import RequestTypes, RequestHandler
 
 REQUEST_TYPE_COLORS = {
     RequestTypes.GET: "#08C751",

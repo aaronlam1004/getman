@@ -8,11 +8,7 @@ from typing import Dict, Any
 from PyQt5.QtWidgets import QInputDialog
 from PyQt5.QtCore import pyqtSignal
 
-FILE_PATH = os.path.dirname(os.path.abspath(__file__))
-WORKSPACE_PATH = os.path.join(FILE_PATH, ".workspaces")
-
-CONFIG_FILE_NAME = "config.ini"
-CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), CONFIG_FILE_NAME)
+from utils.Paths import WORKSPACE_PATH, CONFIG_FILE
 
 TEMP_WORKSPACE = ""
 

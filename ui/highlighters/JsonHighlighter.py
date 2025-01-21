@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets, QtCore, uic, QtGui
 from PyQt5.QtGui import QFont, QColor
 
-from Highlighter import Highlighter
+from ui.highlighters.Highlighter import Highlighter
 
 class JsonHighlighter(Highlighter):
   def __init__(self, parent=None):

@@ -5,23 +5,19 @@ import signal
 import configparser
 from enum import Enum
 
-FILE_PATH = os.path.dirname(__file__)
-GETSCRIPT_PATH = os.path.join(FILE_PATH, 'getscript')
-sys.path.append(GETSCRIPT_PATH)
-
 from PyQt5 import QtWidgets, QtCore, uic
-from PyQt5.QtWidgets import QMenuBar, QAction, QListWidgetItem, QInputDialog, QMessageBox
+from PyQt5.QtWidgets import QMenuBar, QAction, QListWidgetItem
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt
-from PyQt5.QtGui import QBrush, QColor, QFont, QStandardItemModel, QStandardItem
+from PyQt5.QtGui import QBrush, QColor, QFont
 
 from Defines import REQUEST_TYPE_COLORS
 from RequestTable import RequestTable
 from BodySelector import BodySelection, BodySelector
-from Workspace import Workspace, WORKSPACE_PATH
 
-from RequestHandler import RequestTypes, RequestHandler
-from JsonHighlighter import JsonHighlighter
-from utils.Paths import GetUIPath
+from ui.highlighters.JsonHighlighter import JsonHighlighter
+from utils.RequestHandler import RequestTypes, RequestHandler
+from utils.Workspace import Workspace
+from utils.Paths import GetUIPath, WORKSPACE_PATH
 
 class Requester(QtWidgets.QWidget):
     response_signal = pyqtSignal(object)

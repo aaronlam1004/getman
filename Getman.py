@@ -14,13 +14,13 @@ from PyQt5.QtGui import QBrush, QColor, QFont
 from Defines import REQUEST_TYPE_COLORS
 from RequestTable import RequestTable
 from BodySelector import BodySelection, BodySelector
-from Workspace import Workspace, WORKSPACE_PATH
 from Requester import Requester
 
-from Dialogs import YesNoDialog, YesNoCancelDialog, SelectWorkspaceDialog 
-from RequestHandler import RequestTypes, RequestHandler
-from JsonHighlighter import JsonHighlighter
-from utils.Paths import GetUIPath
+from ui.Dialogs import YesNoDialog, YesNoCancelDialog, SelectWorkspaceDialog 
+from ui.highlighters.JsonHighlighter import JsonHighlighter
+from utils.RequestHandler import RequestTypes, RequestHandler
+from utils.Workspace import Workspace
+from utils.Paths import GetUIPath, WORKSPACE_PATH
 
 class Getman(QtWidgets.QMainWindow):
     workspace_updated_signal = pyqtSignal()
